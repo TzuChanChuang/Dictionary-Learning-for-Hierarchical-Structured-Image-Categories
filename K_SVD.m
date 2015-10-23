@@ -2,9 +2,8 @@ function [Dictionary,output] = KSVD(...
 
    Data,... % an nXN matrix that contins N signals (Y), each of dimension n.  
 
-   flag,... % if it is the first initialization
-
-   GivenMatrix...  
+   nIter,...  %number of iteration
+   
    )  
 
 % =========================================================================  
@@ -43,7 +42,7 @@ function [Dictionary,output] = KSVD(...
 param.K= size(Data,1) * size(Data,2);
 
 %    numIteration,...          number of iterations to perform.  
-param.numIteration=1;
+param.numIteration= 200;
 
 %    errorFlag...              if =0, a fix number of coefficients is  
 
@@ -82,11 +81,7 @@ param.L= 250;
 %                                 * 'DataElements' (initialization by the signals themselves), or:  
 
 %                                 * 'GivenMatrix' (initialization by a given matrix param.initialDictionary). 
-if(flag==1)  param.InitializationMethod= 'DataElements';
-else if(flag==2) {
-  param.InitializationMethod= 'GivenMatrix';
-  param.initialDictionary= GivenMatrix;
-}
+param.InitializationMethod= 'DataElements';
 
 %    (optional, see InitializationMethod) initialDictionary,...      % if the initialization method  
 
@@ -115,7 +110,7 @@ param.displayProgress= 0;
 
 %  output                      Struct that contains information about the current run. It may include the following fields:  
 
-%    CoefMatrix                  The final coefficients matrix (it should hold that Data equals approximately Dictionary*output.CoefMatrix.  
+%    ji4                  The final coefficients matrix (it should hold that Data equals approximately Dictionary*output.CoefMatrix.  
 
 %    ratio                       If the true dictionary was defined (in  
 
@@ -213,9 +208,7 @@ elseif (strcmp(param.InitializationMethod,'GivenMatrix'))
 
 end  
 
-% reduce the components in Dictionary that are spanned by the fixed  
-
-% elements  
+% reduce the components in Dictionary that are spanned by the fixed elements  
 
 if (param.preserveDCAtom)  
 
