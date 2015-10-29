@@ -8,8 +8,7 @@ function [Dict,Drls,CoefM,CMlabel] = FDDL(TrainDat,TrainLabel,opts)
 %               .nClass   the number of classes
 %               .wayInit  the way to initialize the dictionary
 %               .lambda1  the parameter of l1-norm energy of coefficient
-%               .lambda2  the parameter of l2-norm of Fisher Discriminative
-%               coefficient term
+%               .lambda2  the parameter of l2-norm of Fisher Discriminative coefficient term
 %               .nIter    the number of FDDL's iteration
 %               .show     sign value of showing the gap sequence
 %
@@ -28,6 +27,8 @@ TrainDat = TrainDat*diag(1./sqrt(sum(TrainDat.*TrainDat)));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %initialize dict and coefficient
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+printf('initializing dict & coef');
+
 Dict_ini  =  []; 
 Dlabel_ini = [];				
 
@@ -42,13 +43,86 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%
 %initialize shared dict
 %%%%%%%%%%%%%%%%%%%%%%%
+printf('initializing shared dict');
+
 SharedDict_ini = [];	%%若shared dict label是放相對應的dict's label那還需要令一個matrix放shared dict嗎？	
-SharedDlabel_ini = [];	%%shared dict label放相對應的dict的label？
-SharedCoef_ini= [];
+SharedDlabel_ini = [];	
+SharedDlabel_oriDic_ini = []; %%shared dict label放相對應的dict的label
+
+HeadDict_ini = []; % Di^
+HeadDictLabel_ini = []; %Di^ label
+%SharedCoef_ini = [];
 %SharedCLabel_ini = [];	%%同shared dict的問題 %%needed?
 
+%%每個Dict random取第一個column、比較兩者之間的inner product是否超過ξ(threshold)= 0.8
+threshold= 0.8;
+SharedD_nClass = 0;
+flag_last = 0;		%check for the last class
+for i= 1:opts.nClass-1
+	If_i_In_SD = 0; 	%if class i in shared dict, Di^ = Di - D0自己的部分 
+	for j= i+1: opts.nClass
+		temp_dic_i = Dict_ini(:, drls==i);
+		temp_dic_j = Dict_ini(:, drls==j);
+		%size_temp= size(temp_dic_i,1)*size(temp_dic_i,2);
+		%item_num= 20;
+		%item_selected= randperm(size_temp, item_num);
+		item_num = size(temp_dic_i, 1);  %取第一行的column的item數
+		inner_ans=0;
+		%counting inner product
+		for k= 1: item_num
+			inner_ans+=temp_dic_i(k)* temp_dic_j(k);
+		end
+		
+		if inner_ans > threshold
+			If_i_In_SD = 1;
+			if (i==opts.nClass-1) & (j== opts.nClass)
+				flag_last = 1;
+			end
+			if isempty(SharedDlabel_oriDic_ini(1, i))		%%never been put in
+				SharedD_nClass +=1;
+				SharedDict_ini= [SharedDict_ini temp_dic_i(:,1)];		%put the first column of the 
+				SharedDlabel_ini = [SharedDlabel_ini repmat(SharedD_nClass,[1 size(temp_dic_i,2)])];
+				SharedDlabel_oriDic_ini = [SharedDlabel_oriDic_ini repmat(i,[1 size(temp_dic_i,2)])];
+			end
+			if isempty(SharedDlabel_oriDic_ini(1, j))		%%never been put in
+				SharedD_nClass +=1;
+				SharedDict_ini= [SharedDict_ini temp_dic_j(:,1)];
+				SharedDlabel_ini = [SharedDlabel_ini repmat(SharedD_nClass,[1 size(temp_dic_j,2)])];
+				SharedDlabel_oriDic_ini = [SharedDlabel_oriDic_ini repmat(j,[1 size(temp_dic_j,2)])];
+			end	
+		end
+	end
 
-%%Dict_head??2. 
+	num_col = size(temp_dic_i, 2);			%%store di^
+	if If_i_In_SD == 1
+		HeadDict_ini = [HeadDict_ini temp_dic_i(:, 2:num_col)];
+		HeadDictLabel_ini = [HeadDictLabel_ini repmat(i, [1 num_col-1])];
+	else
+		HeadDict_ini = [HeadDict_ini temp_dic_i];
+		HeadDictLabel_ini = [HeadDictLabel_ini repmat(i, [1 num_col])];
+	end
+end
+
+%%for the last class
+Dict_lastClass = Dict_ini(:, drls==opts.nClass);
+num_col = size(Dict_lastClass, 2);
+if flag_last==1
+	HeadDict_ini = [HeadDict_ini Dict_lastClass(:, 2:num_col)];
+	HeadDictLabel_ini = [HeadDictLabel_ini repmat(opts.nClass, [1 num_col-1])];
+else
+	HeadDict_ini = [HeadDict_ini Dict_lastClass];
+	HeadDictLabel_ini = [HeadDictLabel_ini repmat(opts.nClass, [1 num_col])];
+end
+
+
+%%Total Dict Di
+TotalDict_ini = [];
+TotalDictLabel_ini = [];
+for i = 1:opts.nClass
+	temp_totaldict = [SharedDict_ini HeadDict_ini(:, HeadDictLabel_ini==i)];
+	TotalDict_ini = [TotalDict_ini temp_totaldict];
+	TotalDictLabel_ini = [TotalDictLabel_ini repmat(i, [1 size(TotalDict_ini, 2)])];
+end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

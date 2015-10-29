@@ -33,8 +33,7 @@ function [opts] = FDDL_SpaCoef(ipts,par)
 %----------------------------------------------------------------------
 %
 %  Inputs :   (1) ipts :    the structre of input data
-%                    .D     the dictionary
-%                    .SD    the shared dictionary                                               %%%
+%                    .D     the dictionary                                                      %%%Total Dictionary
 %                    .X     the training data
 %                    .A     the coefficient matrix in the last iteration
 %                    .SA    the shared coefficient matrix                                       %%%
@@ -43,7 +42,6 @@ function [opts] = FDDL_SpaCoef(ipts,par)
 %                    .tau   the parameter of sparse constraint of coef
 %                    .lambda  the parameter of within-class scatter
 %                    .dls     the labels of dictionary's columns
-%                    .sdls    the labels of shared dictionary's columns                         %%%
 %                    .index   the label of the class being processed
 %
 % Outputs:    (1) opts :    the structure of output data
@@ -58,13 +56,11 @@ par.citeT    =     1e-6;  % stop criterion
 par.cT       =     1e+10; % stop criterion
 
 m            =    size(ipts.D,2);
-drls         =    par.dls; 
-sdrls        =    par.sdls;                                                                     %%%  
+drls         =    par.dls;  
 D            =    ipts.D;
-SD           =    ipts.SD;                                                                      %%%
 X            =    ipts.X;
 A            =    ipts.A;
-SA           =    ipts.SA;                                                                      %%%
+%SA           =    ipts.SA;                                                                      %%%
 tau          =    par.tau;
 lambda1      =    par.tau;
 lambda2      =    par.lambda2;
@@ -99,7 +95,7 @@ beta               =         alpha*2/(lam1+lamN);         %default,user can set
 %%%%%%%%%%%%%%%%%%%%%%%%
 Ai                 =          X;  % the i-th training data
 Xa                 =          A;  
-X0                 =          SA;                                                               %%%
+%X0                 =          SA;                                                               %%%
 Xi                 =          A(:,trls==index);
 Xt_now             =          A(:,trls==index);
 % Xi                 =          zeros(size(A(:,trls==index)));
@@ -155,7 +151,7 @@ Xa(:,trls==index)  =  Xi;
 xm2       =      Xi;%A(:,trls==index);
 xm1       =      Xi;%A(:,trls==index); % now
 
-[gap] = FDDL_Class_Energy(Ai,D,SD,xm1,Xa,X0,drls,sdrls,trls,index,...                           %%%
+[gap] = FDDL_Class_Energy(Ai,D,xm1,Xa,drls,trls,index,...                           %%%
         lambda1,lambda2,lambda3,lambda4,classn);
 prev_f   =   gap;
 ert(1) = gap;
@@ -166,8 +162,8 @@ for n_it = 2 : nIter;
    while for_ever
         % IPM estimate
          
-        grad = FDDL_Gradient_Comp(xm1,Xa,classn,index,...
-        lambda2,lambda3,lambda4,fish_tau2,fish_tau3,trls,drls,newpar,...
+        grad = Gradient_Comp(xm1,Xa,classn,index,...
+        lambda2,lambda3,lambda4,trls,drls,newpar,...
         BAI,CJ);
     
         v        =   xm1(:)-grad./(2*sigma);
@@ -185,8 +181,8 @@ for n_it = 2 : nIter;
             % two-step iteration
             xm2    =   (alpha-beta)*xm1 + (1-alpha)*xm2 + beta*x_temp;
             % compute residual
-           [gap] = FDDL_Class_Energy(Ai,D,xm2,Xa,drls,trls,index,...
-                lambda1,lambda2,lambda3,lambda4,classn,fish_tau2,fish_tau3);
+           [gap] = FDDL_Class_Energy(Ai,D,xm1,Xa,drls,trls,index,...                           %%%
+        lambda1,lambda2,lambda3,lambda4,classn);
 
            f   =   gap;
           
@@ -204,8 +200,8 @@ for n_it = 2 : nIter;
             end
         else
           
-        [gap] = FDDL_Class_Energy(Ai,D,x_temp,Xa,drls,trls,index,...
-        lambda1,lambda2,lambda3,lambda4,classn,fish_tau2,fish_tau3);
+        [gap] = FDDL_Class_Energy(Ai,D,xm1,Xa,drls,trls,index,...                           %%%
+        lambda1,lambda2,lambda3,lambda4,classn);
     
         f   =   gap;
          

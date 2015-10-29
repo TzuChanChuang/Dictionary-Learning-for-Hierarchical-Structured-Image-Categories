@@ -1,4 +1,4 @@
-function [gap] = FDDL_Class_Energy(Xi,D,SD,Ai,Aa,A0,drls,sdrls,trls,index,lambda1,lambda2,lambda3,lambda4,classn)
+function [gap] = FDDL_Class_Energy(Xi,D,Ai,Aa,drls,trls,index,lambda1,lambda2,lambda3,lambda4,classn)
 % ========================================================================
 % Class energy computation of FDDL, Version 1.0
 % Copyright(c) 2011  Meng YANG, Lei Zhang, Xiangchu Feng and David Zhang
