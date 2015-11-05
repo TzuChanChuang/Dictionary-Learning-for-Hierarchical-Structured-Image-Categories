@@ -1,4 +1,4 @@
-function [gap] = FDDL_Class_Energy(Xi,D,Ai,Aa,drls,trls,index,lambda1,lambda2,lambda3,lambda4,classn)
+function [gap] = FDDL_Class_Energy(Xi,D,Ai,Aa,drls,trls,index,lambda1,eta2,eta3,eta4,classn)
 % ========================================================================
 % Class energy computation of FDDL, Version 1.0
 % Copyright(c) 2011  Meng YANG, Lei Zhang, Xiangchu Feng and David Zhang
@@ -14,9 +14,9 @@ function [gap] = FDDL_Class_Energy(Xi,D,Ai,Aa,drls,trls,index,lambda1,lambda2,la
 %           (6) trls: labels of training samples
 %           (7) index: label of class being processed
 %           (8) lambda1 : parameter of l1-norm energy of coefficient
-%           (9) lambda2 : parameter of within-class scatter
-%           (10) lambda3 : parameter of between-class scatter
-%%           (11) lambda4:  parameter of l2-norm energy of coefficient
+%           (9) eta2 : parameter of within-class scatter
+%           (10) eta3 : parameter of between-class scatter
+%%          (11) eta4:  parameter of l2-norm energy of coefficient
 %           (12) classn:   the number of class
 % 
 % Outputs : (1) gap  :    the total energy of some class
@@ -45,16 +45,7 @@ mean_A0            =  mean(tem_A0,2);
     
     gap3 = norm(Ai-repmat(mean(Ai,2),[1 n_c]),'fro')^2;
     
-    GAP3 = lambda2*gap3-lambda3*gap4;
-    
-%    GAP4  =   lambda4*norm(Xi,'fro')^2;% only for one class, no effect
-    
-    %GAP5  =   (tau2)*norm((Ai-D(:,drls==index)*Xi(drls==index,:)),'fro')^2;% only for one class, no effect
-    %GAP6  =   0;
-    %for i = 1:classn
-    %    if i~=index
-    %    GAP6 = GAP6+t*norm(D(:,drls==i)*Xi(drls==i,:),'fro')^2;
-    %    end
-    %end
+    GAP3 = eta2*gap3-eta3*gap4;
+
     
     gap = GAP1+GAP2+GAP3;

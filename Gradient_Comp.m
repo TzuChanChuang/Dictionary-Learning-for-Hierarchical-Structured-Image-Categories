@@ -1,4 +1,4 @@
-function grad = FDDL_Gradient_Comp(Xi,Xa,classn,index,lambda2,lambda3,lambda4,...
+function grad = FDDL_Gradient_Comp(Xi,Xa,classn,index,eta2,eta3,eta4,...
     trls,drls,newpar,BAI,CJ)
 % ========================================================================
 % IPM's Gradient computation of FDDL, Version 1.0
@@ -11,9 +11,9 @@ function grad = FDDL_Gradient_Comp(Xi,Xa,classn,index,lambda2,lambda3,lambda4,..
 %           (2) Xa:   the coefficient matrix of the whole class
 %           (3) classn:   the number of class
 %           (4) index: label of class being processed
-%           (5) lambda2 : parameter of within-class scatter
-%           (6) lambda3 : parameter of between-class scatter
-%           (7) lambda4:  parameter of l2-norm energy of coefficient
+%           (5) eta2 : parameter of within-class scatter
+%           (6) eta3 : parameter of between-class scatter
+%           (7) eta4:  parameter of l2-norm energy of coefficient
 %           (10) trls: labels of training samples
 %           (11) drls: labels of dictionary's column4433
 %           (12) newpar, BAI, and CJ: the precomputed data        
@@ -50,20 +50,20 @@ tem      =   2*DD*Xi-2*DAi;
 grad1    =   tem(:);
 
 
-tem       =   2*lambda2*BiBi*XiT;
+tem       =   2*eta2*BiBi*XiT;
 grad4     =   tem(:);
 
-tem       =  2*lambda4*XiT;
+tem       =  2*eta4*XiT;
 grad9     =  tem(:);
 
-tem       =  -lambda3*(2*BaiBai*XiT-2*BaiGxi);
+tem       =  -eta3*(2*BaiBai*XiT-2*BaiGxi);
 grad5     = tem(:);
 
 grad6 = zeros(size(grad5));
 for k = 1:classn
     temz  =  Z(k).Matrix;
     if k~=index
-        tem = -lambda3*(2*CjCj*XiT-2*C_j*temz');
+        tem = -eta3*(2*CjCj*XiT-2*C_j*temz');
         grad6 = grad6+tem(:);
     end
 end

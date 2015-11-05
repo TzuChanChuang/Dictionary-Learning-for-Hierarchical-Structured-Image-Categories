@@ -7,8 +7,8 @@ function [Dict,Drls,CoefM,CMlabel] = FDDL(TrainDat,TrainLabel,opts)
 %        (3) opts      : the struture of parameters
 %               .nClass   the number of classes
 %               .wayInit  the way to initialize the dictionary
-%               .lambda1  the parameter of l1-norm energy of coefficient
-%               .lambda2  the parameter of l2-norm of Fisher Discriminative coefficient term
+%               .lambda  the parameter of l1-norm energy of coefficient
+%               .eta  the parameter of l2-norm of coefficient term
 %               .nIter    the number of FDDL's iteration
 %               .show     sign value of showing the gap sequence
 %
@@ -55,7 +55,7 @@ HeadDictLabel_ini = []; %Di^ label
 %SharedCLabel_ini = [];	%%同shared dict的問題 %%needed?
 
 %%每個Dict random取第一個column、比較兩者之間的inner product是否超過ξ(threshold)= 0.8
-threshold= 0.8;
+threshold= 0.9;
 SharedD_nClass = 0;
 flag_last = 0;		%check for the last class
 for i= 1:opts.nClass-1
@@ -126,18 +126,22 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%use CVX to update Ai=[Aj0, Aj^],  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Main loop of 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-DL_par.dls        =     Dlabel_ini;
-DL_par.sdls        =    SharedDlabel_ini;
-DL_ipts.D         =     Dict_ini;
-DL_ipts.SD 		  =		SharedDict_ini;
+DL_par.dls        =    	TotalDictLabel_ini;
+%DL_par.sdls       =     SharedDlabel_ini;
+DL_ipts.D         =     TotalDict_ini;
+%DL_ipts.SD 		  =		SharedDict_ini;
 DL_ipts.trls      =     TrainLabel;
-DL_par.tau        =     opts.lambda1;
-DL_par.lambda2    =     opts.lambda2;
+DL_par.tau        =     opts.lambda;
+DL_par.eta    	  =     opts.eta;
  
 DL_nit            =     1;
-drls              =     Dlabel_ini;
+drls              =     TotalDictLabel_ini;
 while DL_nit<=opts.nIter  
 	if size(DL_ipts.D,1)>size(DL_ipts.D,2)
 		DL_par.c        =    1.05*eigs(DL_ipts.D'*DL_ipts.D,1);
@@ -151,7 +155,7 @@ while DL_nit<=opts.nIter
         fprintf(['Updating coefficients, class: ' num2str(ci) '\n'])
         DL_ipts.X         			=  TrainDat(:,TrainLabel==ci);
         DL_ipts.A         			=  coef;
-        DL_ipts.SA         			=  SharedCoef_ini;
+        %DL_ipts.SA         			=  SharedCoef_ini;
         DL_par.index      			=  ci; 
         [Copts]             		=  FDDL_SpaCoef (DL_ipts,DL_par);
         coef(:,TrainLabel==ci)    	=  Copts.A;
