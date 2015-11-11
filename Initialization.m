@@ -177,4 +177,8 @@ while DL_nit<=opts.nIter
         CMlabel(ci)        			=  ci;
         CoefM(:,ci)         		=  mean(Copts.A,2);
     end
-    [GAP_coding(Fish_nit)]  =  Class_Energy(TrainDat,coef,opts.nClass,Fish_par,Fish_ipts) 	 %%%%%%%%要改
+    [GAP_coding(Fish_nit)]  =  Class_Energy(TrainDat,coef,opts.nClass,Fish_par,Fish_ipts) 	 
+
+     %------------------------
+    %updating the dictionary Di^
+    %------------------------

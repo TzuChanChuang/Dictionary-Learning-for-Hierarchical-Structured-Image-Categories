@@ -1,24 +1,18 @@
-function B = l2ls_learn_basis_dual(X, S, l2norm, Binit)
+function B = l2ls_learn_basis_dual(X, S, c, Binit)
 % Learning basis using Lagrange dual (with basis normalization)
 %
 % This code solves the following problem:
 % 
-%    minimize_B   0.5*||X - B*S||^2
-%    subject to   ||B(:,j)||_2 <= l2norm, forall j=1...size(S,1)
-% 
-% The detail of the algorithm is described in the following paper:
-% 'Efficient Sparse Codig Algorithms', Honglak Lee, Alexis Battle, Rajat Raina, Andrew Y. Ng, 
-% Advances in Neural Information Processing Systems (NIPS) 19, 2007
-%
-% Written by Honglak Lee <hllee@cs.stanford.edu>
-% Copyright 2007 by Honglak Lee, Alexis Battle, Rajat Raina, and Andrew Y. Ng
+%    minimize_B   0.5*||X - B*S||^2											% X= training data, B= dict, S= coef
+%    subject to   ||B(:,j)||_2 <= c, forall j=1...size(S,1)			%number of items in B
 
+%%% number of items in X = L * N
 L = size(X,1);
 N = size(X,2);
 M = size(S, 1);
 
 tic
-SSt = S*S';
+SSt = S*S';  
 XSt = X*S';
 
 if exist('Binit', 'var')
@@ -27,7 +21,7 @@ else
     dual_lambda = 10*abs(rand(M,1)); % any arbitrary initialization should be ok.
 end
 
-c = l2norm^2;
+%c = 1;
 trXXt = sum(sum(X.^2));
 
 lb=zeros(size(dual_lambda));
@@ -53,7 +47,7 @@ return;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [f,g,H] = fobj_basis_dual(dual_lambda, SSt, XSt, X, c, trXXt)
+function [f,g,H] = fobj_basis_dual(dual_lambda, SSt, XSt, X, c, trXXt)			%函數值、gradient、hessian matrix
 % Compute the objective function value at x
 L= size(XSt,1);
 M= length(dual_lambda);
