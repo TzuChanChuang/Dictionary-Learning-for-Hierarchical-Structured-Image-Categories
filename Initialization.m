@@ -3,13 +3,13 @@ function [Dict,Drls,CoefM,CMlabel] = FDDL(TrainDat,TrainLabel,opts)
 %
 %Input : (1) TrainDat: the training data matrix. 
 %                      Each column is a training sample
-%        (2) TrainDabel: the training data labels
+%        (2) TrainLabel: the training data labels
 %        (3) opts      : the struture of parameters
 %               .nClass   the number of classes
 %               .wayInit  the way to initialize the dictionary
 %               .lambda  the parameter of l1-norm energy of coefficient
 %               .eta  the parameter of l2-norm of coefficient term
-%               .nIter    the number of FDDL's iteration
+%               .nIter    the number of iteration
 %               .show     sign value of showing the gap sequence
 %
 %Output: (1) Dict:  the learnt dictionary via FDDL
@@ -37,7 +37,7 @@ for ci = 1:opts.nClass
     [dict, output_ini]		=    K_SVD(cdat);
     Dict_ini      			=    [Dict_ini dict];
     Dlabel_ini    			=    [Dlabel_ini repmat(ci,[1 size(dict,2)])];
-    coef(:,TrainLabel ==ci) = output_ini.CoefMatrix;
+    coef(:,TrainLabel ==ci) = 	 output_ini.CoefMatrix;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -126,8 +126,23 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%use CVX to update Ai=[Aj0, Aj^],  
+%use CVX to update Ai=[Aj0, Aj^],  ||Xi-[D0, Di^]Ai||2 + lambda*|||Ai||1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+nIter_CVX = 15;
+for i = 1:nIter_CVX
+	for ci = 1:opts.nClass
+	    X  =   TrainDat(:,TrainLabel==ci);
+	    A  =   coef(:,TrainLabel ==ci);
+	    D  =   TotalDict_ini(:,TotalDict_ini ==ci);
+	    p  =   size(A,1);
+		cvx_begin quiet
+			variable A(p);
+			minimize (norm(X-D*A) + gamma*norm(A,1));
+		cvx_end
+	end
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Main loop of 
@@ -157,9 +172,9 @@ while DL_nit<=opts.nIter
         DL_ipts.A         			=  coef;
         %DL_ipts.SA         			=  SharedCoef_ini;
         DL_par.index      			=  ci; 
-        [Copts]             		=  FDDL_SpaCoef (DL_ipts,DL_par);
+        [Copts]             		=  UpdateCoef(DL_ipts,DL_par);
         coef(:,TrainLabel==ci)    	=  Copts.A;
         CMlabel(ci)        			=  ci;
         CoefM(:,ci)         		=  mean(Copts.A,2);
     end
-    [GAP_coding(Fish_nit)]  =  FDDL_FDL_Energy(TrainDat,coef,opts.nClass,Fish_par,Fish_ipts)
+    [GAP_coding(Fish_nit)]  =  Class_Energy(TrainDat,coef,opts.nClass,Fish_par,Fish_ipts) 	 %%%%%%%%要改
