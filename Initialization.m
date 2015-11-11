@@ -51,8 +51,7 @@ SharedDlabel_oriDic_ini = []; %%shared dict label放相對應的dict的label
 
 HeadDict_ini = []; % Di^
 HeadDictLabel_ini = []; %Di^ label
-%SharedCoef_ini = [];
-%SharedCLabel_ini = [];	%%同shared dict的問題 %%needed?
+
 
 %%每個Dict random取第一個column、比較兩者之間的inner product是否超過ξ(threshold)= 0.8
 threshold= 0.9;
@@ -126,7 +125,7 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%use CVX to update Ai=[Aj0, Aj^],  ||Xi-[D0, Di^]Ai||2 + lambda*|||Ai||1
+%use CVX to update Ai=[Ai0, Ai^],  ||Xi-[D0, Di^]Ai||2 + lambda*||Ai||1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 nIter_CVX = 15;
@@ -142,6 +141,9 @@ for i = 1:nIter_CVX
 		cvx_end
 	end
 end
+
+%%Ai^ = HeadCoef, HeadCoef_Label
+%%Ai0 = SharedCoef, SharedCoef_Label
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -170,7 +172,7 @@ while DL_nit<=opts.nIter
         fprintf(['Updating coefficients, class: ' num2str(ci) '\n'])
         DL_ipts.X         			=  TrainDat(:,TrainLabel==ci);
         DL_ipts.A         			=  coef;
-        %DL_ipts.SA         			=  SharedCoef_ini;
+        %DL_ipts.SA         			=  SharedCoef;
         DL_par.index      			=  ci; 
         [Copts]             		=  UpdateCoef(DL_ipts,DL_par);
         coef(:,TrainLabel==ci)    	=  Copts.A;
@@ -179,6 +181,41 @@ while DL_nit<=opts.nIter
     end
     [GAP_coding(Fish_nit)]  =  Class_Energy(TrainDat,coef,opts.nClass,Fish_par,Fish_ipts) 	 
 
-     %------------------------
-    %updating the dictionary Di^
-    %------------------------
+    %------------------------------------------------------------
+    %updating the dictionary Di^ : min||Xi - D0*Ai0 - Di^*Ai^||2
+    %------------------------------------------------------------
+    HeadDict = [];
+    for ci = 1:opts.nClass
+    	fprintf(['Updating Di^, class: ' num2str(ci) '\n'])
+    	%A = SharedDict_ini(:, SharedDlabel_ini==ci)*SharedCoef(:, SharedCoef_Label==ci);
+    	%A+= HeadDict_ini(:, HeadDictLabel_ini==ci)*HeadCoef(:, HeadCoef_Label==ci);
+    	%c = 1;
+    	%Binit = HeadDict_ini(:, HeadDictLabel_ini==ci);
+    	%HeadDict(:, HeadDictLabel_ini==ci)   =  learn_basis_dual(TrainDat(:,TrainLabel==ci), A, c, Binit)
+    end
+
+    %------------------------------------------------------------
+    %updating the dictionary D0 : min||X0 - D0*Ai0||2
+    %------------------------------------------------------------
+    fprintf(['Updating D0 \n'])
+    A = HeadCoef;
+    Binit = SharedDict_ini;
+    c = 1;
+    X0 = [];
+    for ci = 1:opts.nClass
+    	Xi = TrainDat(:, TrainLabel==ci) - HeadDict(:, HeadDictLabel_ini==ci) * HeadCoef(:, HeadCoef_Label==ci);
+    	X0 = [X0 Xi];
+    end
+	HeadDict_ini(:, HeadDictLabel_ini==ci)   = learn_basis_dual(X, A, c, Binit);
+
+
+
+
+
+
+
+
+
+
+
+
