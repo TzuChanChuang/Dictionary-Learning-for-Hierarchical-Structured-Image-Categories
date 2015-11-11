@@ -46,7 +46,7 @@ end
 printf('initializing shared dict');
 
 SharedDict_ini = [];	%%若shared dict label是放相對應的dict's label那還需要令一個matrix放shared dict嗎？	
-SharedDlabel_ini = [];	
+%SharedDlabel_ini = [];	
 SharedDlabel_oriDic_ini = []; %%shared dict label放相對應的dict的label
 
 HeadDict_ini = []; % Di^
@@ -80,13 +80,13 @@ for i= 1:opts.nClass-1
 			if isempty(SharedDlabel_oriDic_ini(1, i))		%%never been put in
 				SharedD_nClass +=1;
 				SharedDict_ini= [SharedDict_ini temp_dic_i(:,1)];		%put the first column of the 
-				SharedDlabel_ini = [SharedDlabel_ini repmat(SharedD_nClass,[1 size(temp_dic_i,2)])];
+				%SharedDlabel_ini = [SharedDlabel_ini repmat(SharedD_nClass,[1 size(temp_dic_i,2)])];
 				SharedDlabel_oriDic_ini = [SharedDlabel_oriDic_ini repmat(i,[1 size(temp_dic_i,2)])];
 			end
 			if isempty(SharedDlabel_oriDic_ini(1, j))		%%never been put in
 				SharedD_nClass +=1;
 				SharedDict_ini= [SharedDict_ini temp_dic_j(:,1)];
-				SharedDlabel_ini = [SharedDlabel_ini repmat(SharedD_nClass,[1 size(temp_dic_j,2)])];
+				%SharedDlabel_ini = [SharedDlabel_ini repmat(SharedD_nClass,[1 size(temp_dic_j,2)])];
 				SharedDlabel_oriDic_ini = [SharedDlabel_oriDic_ini repmat(j,[1 size(temp_dic_j,2)])];
 			end	
 		end
@@ -184,29 +184,27 @@ while DL_nit<=opts.nIter
     %------------------------------------------------------------
     %updating the dictionary Di^ : min||Xi - D0*Ai0 - Di^*Ai^||2
     %------------------------------------------------------------
-    HeadDict = [];
     for ci = 1:opts.nClass
-    	fprintf(['Updating Di^, class: ' num2str(ci) '\n'])
-    	%A = SharedDict_ini(:, SharedDlabel_ini==ci)*SharedCoef(:, SharedCoef_Label==ci);
-    	%A+= HeadDict_ini(:, HeadDictLabel_ini==ci)*HeadCoef(:, HeadCoef_Label==ci);
-    	%c = 1;
-    	%Binit = HeadDict_ini(:, HeadDictLabel_ini==ci);
-    	%HeadDict(:, HeadDictLabel_ini==ci)   =  learn_basis_dual(TrainDat(:,TrainLabel==ci), A, c, Binit)
+ 		Xi = TrainDat(:, TrainLabel==ci) - SharedDict_ini * SharedCoef(:, SharedCoef_Label==ci);
+    	c = 1;
+    	Dinit_ci = HeadDict_ini(:, HeadDictLabel_ini==ci);
+    	Ai = HeadCoef(:, HeadCoef_Label==ci);
+    	HeadDict(:, HeadDictLabel_ini==ci)   =  learn_basis_dual(TrainDat(:,TrainLabel==ci), Ai, c, Dinit_ci);
     end
 
     %------------------------------------------------------------
     %updating the dictionary D0 : min||X0 - D0*Ai0||2
     %------------------------------------------------------------
     fprintf(['Updating D0 \n'])
-    A = HeadCoef;
-    Binit = SharedDict_ini;
+    A0 = HeadCoef;
+    Dinit_shared = SharedDict_ini;
     c = 1;
     X0 = [];
     for ci = 1:opts.nClass
     	Xi = TrainDat(:, TrainLabel==ci) - HeadDict(:, HeadDictLabel_ini==ci) * HeadCoef(:, HeadCoef_Label==ci);
     	X0 = [X0 Xi];
     end
-	HeadDict_ini(:, HeadDictLabel_ini==ci)   = learn_basis_dual(X, A, c, Binit);
+	SharedDict   = learn_basis_dual(X0, A0, c, Dinit_shared);
 
 
 

@@ -1,4 +1,4 @@
-function B = l2ls_learn_basis_dual(X, S, c, Binit)
+function B = learn_basis_dual(X, S, c, Binit)
 % Learning basis using Lagrange dual (with basis normalization)
 %
 % This code solves the following problem:
