@@ -1,4 +1,4 @@
-function [Dictionary,output] = KSVD(...  
+function [Dictionary,output.CoefMatrix] = KSVD(...  
 
    Data,... % an nXN matrix that contins N signals (Y), each of dimension n.  
 
@@ -42,7 +42,7 @@ function [Dictionary,output] = KSVD(...
 param.K= size(Data,1) * size(Data,2);
 
 %    numIteration,...          number of iterations to perform.  
-param.numIteration= 200;
+param.numIteration= nIter;
 
 %    errorFlag...              if =0, a fix number of coefficients is  
 
@@ -110,7 +110,7 @@ param.displayProgress= 0;
 
 %  output                      Struct that contains information about the current run. It may include the following fields:  
 
-%    ji4                  The final coefficients matrix (it should hold that Data equals approximately Dictionary*output.CoefMatrix.  
+%    CoefMatrix                  The final coefficients matrix (it should hold that Data equals approximately Dictionary*output.CoefMatrix.  
 
 %    ratio                       If the true dictionary was defined (in  
 
