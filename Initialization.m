@@ -26,7 +26,7 @@ TrainDat = TrainDat*diag(1./sqrt(sum(TrainDat.*TrainDat)));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %initialize dict and coefficient
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-printf('initializing dict & coef');
+fprintf(['initializing dict & coef']);
 
 Dict_ini  =  []; 
 Dlabel_ini = [];				
@@ -36,13 +36,13 @@ for ci = 1:opts.nClass
     [dict, coef_ini]		=    K_SVD(cdat, opts.nIter);
     Dict_ini      			=    [Dict_ini dict];
     Dlabel_ini    			=    [Dlabel_ini repmat(ci,[1 size(dict,2)])];
-    coef(:,TrainLabel ==ci) = 	 coef_ini;
+    %%scoef(:,TrainLabel ==ci) = 	 coef_ini;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %initialize shared dict
 %%%%%%%%%%%%%%%%%%%%%%%
-printf('initializing shared dict');
+fprintf(['initializing shared dict']);
 
 SharedDict_ini = [];	%%若shared dict label是放相對應的dict's label那還需要令一個matrix放shared dict嗎？	
 %SharedDlabel_ini = [];	
@@ -90,6 +90,7 @@ for i= 1:opts.nClass-1
 		HeadDictLabel_ini = [HeadDictLabel_ini repmat(i, [1 num_col])];
 	end
 end
+fprintf(['SharedD_nClass = ' num2str(SharedD_nClass) '\n'])
 
 %%for the last class
 Dict_lastClass = Dict_ini(:, Dlabel_ini==opts.nClass);
@@ -116,24 +117,42 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %use CVX to update Ai=[Ai0, Ai^],  ||Xi-[D0, Di^]Ai||2 + lambda*||Ai||1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-nIter_CVX = 15;
+coef = []; 
+coef_Label = [];
+HeadCoef = [];
+SharedCoef = [];
+fprintf(['Initalize coefficients \n']);
+nIter_CVX = 1;				%%%%%???
 for i = 1:nIter_CVX
 	for ci = 1:opts.nClass
-	    X  =   TrainDat(:,TrainLabel==ci);
-	    A  =   coef(:,TrainLabel ==ci);
-	    D  =   TotalDict_ini(:,TotalDictLabel_ini ==ci);
-	    p  =   size(A,1);
-		cvx_begin quiet
-			variable A(p);
-			minimize (norm(X-D*A) + gamma*norm(A,1));
-		cvx_end
+		fprintf(['Initalize coefficients, class:' num2str(ci) '\n']);
+	    X  =    TrainDat(:,TrainLabel==ci);
+	    D  =    TotalDict_ini(:,TotalDictLabel_ini ==ci);
+	    A  =    zeros(size(D,2),size(X,2));
+	    m  =	size(A,1);
+	    n  =	size(A,2);
+	    for j=1:n;
+			cvx_begin quiet
+				variable a(p);
+				minimize (norm(X(:,j)-D*a) + opts.lambda*norm(a,1));
+			cvx_end
+			A(:,j) = a;
+		end
+		coef = [coef A];
+		coef_Label = [coef_Label repmat(ci, [1 n])];
+		SharedCoef = [SharedCoef A(1:SharedD_nClass, :)];
+		%%SharedCoef_Label = [SharedCoef_Label repmat(ci, [1 n])];
+		HeadCoef = [HeadCoef A(SharedD_nClass+1:m, :)];
+		%%HeadCoef_Label = [HeadCoef_Label repmat(ci, [1 n])];
 	end
 end
-
+%%A = coef, coef_Label
 %%Ai^ = HeadCoef, HeadCoef_Label
 %%Ai0 = SharedCoef, SharedCoef_Label
 
+for i = 1:opts.nClass
+	HeadCoef = []
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Main loop of 
@@ -173,10 +192,10 @@ while DL_nit<=opts.nIter
     %updating the dictionary Di^ : min||Xi - D0*Ai0 - Di^*Ai^||2
     %------------------------------------------------------------
     for ci = 1:opts.nClass
- 		Xi = TrainDat(:, TrainLabel==ci) - SharedDict_ini * SharedCoef(:, SharedCoef_Label==ci);
+ 		Xi = TrainDat(:, TrainLabel==ci) - SharedDict_ini * SharedCoef(:, coef_Label==ci);
     	c = 1;
     	Dinit_ci = HeadDict_ini(:, HeadDictLabel_ini==ci);
-    	Ai = HeadCoef(:, HeadCoef_Label==ci);
+    	Ai = HeadCoef(:, coef_Label==ci);
     	HeadDict(:, HeadDictLabel_ini==ci)   =  learn_basis_dual(TrainDat(:,TrainLabel==ci), Ai, c, Dinit_ci);
     end
 
@@ -189,7 +208,7 @@ while DL_nit<=opts.nIter
     c = 1;
     X0 = [];
     for ci = 1:opts.nClass
-    	Xi = TrainDat(:, TrainLabel==ci) - HeadDict(:, HeadDictLabel_ini==ci) * HeadCoef(:, HeadCoef_Label==ci);
+    	Xi = TrainDat(:, TrainLabel==ci) - HeadDict(:, HeadDictLabel_ini==ci) * HeadCoef(:, coef_Label==ci);
     	X0 = [X0 Xi];
     end
 	SharedDict   = learn_basis_dual(X0, A0, c, Dinit_shared);
