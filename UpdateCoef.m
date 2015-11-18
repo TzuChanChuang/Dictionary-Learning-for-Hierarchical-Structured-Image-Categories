@@ -1,4 +1,4 @@
-function [opts] = FDDL_SpaCoef(ipts,par)
+function [opts] = UpdateCoef(ipts,par)
 % ========================================================================
 % Coefficient updating of FDDL, Version 1.0
 % Copyright(c) 2011  Meng YANG, Lei Zhang, Xiangchu Feng and David Zhang
@@ -34,7 +34,7 @@ function [opts] = FDDL_SpaCoef(ipts,par)
 %
 %  Inputs :   (1) ipts :    the structre of input data
 %                    .D     the dictionary                                                      %%%Total Dictionary
-%                    .X     the training data
+%                    .X     the ith training data
 %                    .A     the coefficient matrix in the last iteration
 %                    .SA    the shared coefficient matrix                                       %%%
 %                    .trls  the labels of training data
@@ -60,7 +60,7 @@ drls         =    par.dls;
 D            =    ipts.D;
 X            =    ipts.X;
 A            =    ipts.A;
-%SA           =    ipts.SA;                                                                      %%%
+SA           =    ipts.SA;                                                                      %%%
 tau          =    par.tau;
 lambda1      =    par.tau;
 eta2         =    par.eta;
@@ -95,11 +95,9 @@ beta               =         alpha*2/(lam1+lamN);         %default,user can set
 %%%%%%%%%%%%%%%%%%%%%%%%
 Ai                 =          X;  % the i-th training data
 Xa                 =          A;  
-%X0                 =          SA;                                                               %%%
+X0                 =          SA;                                                               %%%
 Xi                 =          A(:,trls==index);
 Xt_now             =          A(:,trls==index);
-% Xi                 =          zeros(size(A(:,trls==index)));
-% Xt_now             =          zeros(size(A(:,trls==index)));
 
 newpar.n_d          =   size(Ai,2);             % the sample number of i-th training data
 n                   =   size(Xa,2);             % the total sample number of training data
@@ -147,11 +145,13 @@ newpar.m            =   m;                 % the number of dictionary column ato
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %main loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 Xa(:,trls==index)  =  Xi;
 xm2       =      Xi;%A(:,trls==index);
 xm1       =      Xi;%A(:,trls==index); % now
 
-[gap] = Class_Energy(Ai,D,xm1,Xa,drls,trls,index,...                           %%%
+
+[gap] = Class_Energy(Ai,D,X0,xm1,Xa,drls,trls,index,...                           %%%
         lambda1,eta2,eta3,eta4,classn);
 prev_f   =   gap;
 ert(1) = gap;
@@ -181,7 +181,7 @@ for n_it = 2 : nIter;
             % two-step iteration
             xm2    =   (alpha-beta)*xm1 + (1-alpha)*xm2 + beta*x_temp;
             % compute residual
-           [gap] = Class_Energy(Ai,D,xm1,Xa,drls,trls,index,...                           %%%
+           [gap] = Class_Energy(Ai,D,X0,xm1,Xa,drls,trls,index,...                           %%%
         lambda1,eta2,eta3,eta4,classn);
 
            f   =   gap;
@@ -200,7 +200,7 @@ for n_it = 2 : nIter;
             end
         else
           
-        [gap] = Class_Energy(Ai,D,xm1,Xa,drls,trls,index,...                           %%%
+        [gap] = Class_Energy(Ai,D,X0,xm1,Xa,drls,trls,index,...                           %%%
         lambda1,eta2,eta3,eta4,classn);
     
         f   =   gap;

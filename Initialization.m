@@ -1,4 +1,4 @@
-function [Dict,Drls,CoefM,CMlabel] = FDDL(TrainDat,TrainLabel,opts)
+function [Dict,Drls,CoefM,CMlabel] = Initialization(TrainDat,TrainLabel,opts)
 %----------------------------------------------------------------------
 %
 %Input : (1) TrainDat: the training data matrix. 
@@ -135,52 +135,42 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%use CVX to update Ai=[Ai0, Ai^],  ||Xi-[D0, Di^]Ai||2 + lambda*||Ai||1
+%use CVX to initialize Ai=[Ai0, Ai^],  ||Xi-[D0, Di^]Ai||2 + lambda*||Ai||1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-coef = []; 
-coef_Label = [];
+coef = [];
 HeadCoef = [];
 SharedCoef = [];
 fprintf(['Initalize coefficients \n']);
-nIter_CVX = 1;				%%%%%???
-for i = 1:nIter_CVX
-	for ci = 1:opts.nClass
-		fprintf(['Initalize coefficients, class:' num2str(ci) '\n']);
-	    X  =    TrainDat(:,TrainLabel==ci);
-	    D  =    TotalDict_ini(:,TotalDictLabel_ini ==ci);
-	    A  =    zeros(size(D,2),size(X,2));
-	    m  =	size(A,1);
-	    n  =	size(A,2);
-	    for j=1:n;
-			cvx_begin quiet
-				variable a(p);
-				minimize (norm(X(:,j)-D*a) + opts.lambda*norm(a,1));
-			cvx_end
-			A(:,j) = a;
-		end
-		coef = [coef A];
-		coef_Label = [coef_Label repmat(ci, [1 n])];
-		SharedCoef = [SharedCoef A(1:SharedD_nClass, :)];
-		%%SharedCoef_Label = [SharedCoef_Label repmat(ci, [1 n])];
-		HeadCoef = [HeadCoef A(SharedD_nClass+1:m, :)];
-		%%HeadCoef_Label = [HeadCoef_Label repmat(ci, [1 n])];
+for ci = 1:opts.nClass
+	fprintf(['Initalize coefficients, class:' num2str(ci) '\n']);
+	X  =    TrainDat(:,TrainLabel==ci);
+	D  =    TotalDict_ini(:,TotalDictLabel_ini ==ci);
+	A  =    zeros(size(D,2),size(X,2));
+	m  =	size(A,1);
+	n  =	size(A,2);
+	for j=1:n;
+		cvx_begin quiet
+			variable a(p);
+			minimize (norm(X(:,j)-D*a) + opts.lambda*norm(a,1));
+		cvx_end
+		A(:,j) = a;
 	end
+	coef = [coef A];
+	SharedCoef = [SharedCoef A(1:SharedD_nClass, :)];
+	HeadCoef = [HeadCoef A(SharedD_nClass+1:m, :)];
 end
-%%A = coef, coef_Label
-%%Ai^ = HeadCoef, HeadCoef_Label
-%%Ai0 = SharedCoef, SharedCoef_Label
+%%A = coef, coef_Label = TrainLaebel
+%%Ai^ = HeadCoef
+%%Ai0 = SharedCoef
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Main loop of 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 DL_par.dls        =    	TotalDictLabel_ini;
-%DL_par.sdls       =     SharedDlabel_ini;
-DL_ipts.D         =     TotalDict_ini;
-%DL_ipts.SD 		  =		SharedDict_ini;
+DL_ipts.D         =     TotalDict_ini;   
 DL_ipts.trls      =     TrainLabel;
 DL_par.tau        =     opts.lambda;
 DL_par.eta    	  =     opts.eta;
- 
 DL_nit            =     1;
 while DL_nit<=opts.nIter  
 	if size(DL_ipts.D,1)>size(DL_ipts.D,2)
@@ -195,7 +185,7 @@ while DL_nit<=opts.nIter
         fprintf(['Updating coefficients, class: ' num2str(ci) '\n'])
         DL_ipts.X         			=  TrainDat(:,TrainLabel==ci);
         DL_ipts.A         			=  coef;
-        %DL_ipts.SA         			=  SharedCoef;
+        DL_ipts.SA         			=  SharedCoef;
         DL_par.index      			=  ci; 
         [Copts]             		=  UpdateCoef(DL_ipts,DL_par);
         coef(:,TrainLabel==ci)    	=  Copts.A;
@@ -208,10 +198,10 @@ while DL_nit<=opts.nIter
     %updating the dictionary Di^ : min||Xi - D0*Ai0 - Di^*Ai^||2
     %------------------------------------------------------------
     for ci = 1:opts.nClass
- 		Xi = TrainDat(:, TrainLabel==ci) - SharedDict_ini * SharedCoef(:, coef_Label==ci);
+ 		Xi = TrainDat(:, TrainLabel==ci) - SharedDict_ini * SharedCoef(:, TrainLabel==ci);
     	c = 1;
     	Dinit_ci = HeadDict_ini(:, HeadDictLabel_ini==ci);
-    	Ai = HeadCoef(:, coef_Label==ci);
+    	Ai = HeadCoef(:, TrainLabel==ci);
     	HeadDict(:, HeadDictLabel_ini==ci)   =  learn_basis_dual(TrainDat(:,TrainLabel==ci), Ai, c, Dinit_ci);
     end
 
@@ -224,12 +214,11 @@ while DL_nit<=opts.nIter
     c = 1;
     X0 = [];
     for ci = 1:opts.nClass
-    	Xi = TrainDat(:, TrainLabel==ci) - HeadDict(:, HeadDictLabel_ini==ci) * HeadCoef(:, coef_Label==ci);
+    	Xi = TrainDat(:, TrainLabel==ci) - HeadDict(:, HeadDictLabel_ini==ci) * HeadCoef(:, TrainLabel==ci);
     	X0 = [X0 Xi];
     end
 	SharedDict   = learn_basis_dual(X0, A0, c, Dinit_shared);
-
-
+end
 
 
 

@@ -1,4 +1,4 @@
-function [gap] = FDDL_Class_Energy(Xi,D,Ai,Aa,drls,trls,index,lambda1,eta2,eta3,eta4,classn)
+function [gap] = Class_Energy(Xi,D,A0,Ai,Aa,drls,trls,index,lambda1,eta2,eta3,eta4,classn)
 % ========================================================================
 % Class energy computation of FDDL, Version 1.0
 % Copyright(c) 2011  Meng YANG, Lei Zhang, Xiangchu Feng and David Zhang
@@ -25,7 +25,7 @@ function [gap] = FDDL_Class_Energy(Xi,D,Ai,Aa,drls,trls,index,lambda1,eta2,eta3,
 
 gap3  =   0;
 gap4  =   0;
-GAP1  =   norm((Xi-D*Ai),'fro')^2;% only for one class, no effect
+GAP1  =   norm((Xi-D(:, drls==index)*Ai),'fro')^2;% only for one class, no effect
 GAP2  =   lambda1*sum(abs(Ai(:)));%
     
 Aa(:,trls==index)  =  Ai;
@@ -34,18 +34,17 @@ mean_xa            =  mean(tem_XA,2);       %% column vector containing the mean
 tem_A0             =  A0;                   %% shared coef
 mean_A0            =  mean(tem_A0,2);       
     
-    n_c                =  size(Ai,2);
-    for i_c = 1:classn
-        t_A0_ic   = tem_A0(:,trls==i_c);
-        n_ic      = size(t_A0_ic,2);
-        mean_a0ic = mean(t_A0_ic,2);
-%         gap3 = gap3+norm(t_X_ic-repmat(mean(t_X_ic,2),[1 size(t_X_ic,2)]),'fro')^2;
-        gap4 = gap4+n_ic*(mean_a0ic-mean_A0)'*(mean_a0ic-mean_A0);
-    end
+n_c                =  size(Ai,2);
+for i_c = 1:classn
+    t_A0_ic   = tem_A0(:,trls==i_c);
+    n_ic      = size(t_A0_ic,2);
+    mean_a0ic = mean(t_A0_ic,2);
+    gap4 = gap4+n_ic*(mean_a0ic-mean_A0)'*(mean_a0ic-mean_A0);
+end
     
-    gap3 = norm(Ai-repmat(mean(Ai,2),[1 n_c]),'fro')^2;
-    
-    GAP3 = eta2*gap3-eta3*gap4;
+gap3 = norm(Ai-repmat(mean(Ai,2),[1 n_c]),'fro')^2;
+
+GAP3 = eta2*gap3-eta3*gap4;
 
     
-    gap = GAP1+GAP2+GAP3;
+gap = GAP1+GAP2+GAP3;
