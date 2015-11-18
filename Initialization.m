@@ -150,10 +150,6 @@ end
 %%Ai^ = HeadCoef, HeadCoef_Label
 %%Ai0 = SharedCoef, SharedCoef_Label
 
-for i = 1:opts.nClass
-	HeadCoef = []
-end
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Main loop of 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
