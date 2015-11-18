@@ -44,63 +44,83 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%
 fprintf(['initializing shared dict']);
 
-SharedDict_ini = [];	%%若shared dict label是放相對應的dict's label那還需要令一個matrix放shared dict嗎？	
-%SharedDlabel_ini = [];	
-SharedDlabel_oriDic_ini = []; %%shared dict label放相對應的dict的label
+SharedDict_ini = [];	
+SharedDlabel_oriDic_ini = []; 
 
-HeadDict_ini = []; % Di^
-HeadDictLabel_ini = []; %Di^ label
+HeadDict_ini = Dict_ini; % Di^
+HeadDictLabel_ini = Dlabel_ini; %Di^ label
 
-
-%%每個Dict random取第一個column、比較兩者之間的inner product是否超過ξ(threshold)= 0.9
+%pick columns from every two dictionaries and count their inner product, if > ξ = 0.9, put the columns into shared dictionary
 threshold= 0.9;
-SharedD_nClass = 0;		%%no more than 1/3 opts.nClass
-Shared_class_exist = zeros(1, opts.nClass);		%to check if the class already exist in the D0
-SharedDlabel_oriDic_ini = [];
-for i= 1:opts.nClass-1
-	for j= i+1: opts.nClass
+SharedD_nClass = 0;	
+%Shared_class_exist = zeros(1, opts.nClass);		%to check if the class already exist in the D0
+size_col = size(Dict_ini(:, Dlabel_ini==1),2);
+num_class_upperbound = size_col/2; 			 %number of D0's upper bound = 1/2 Di^
+num_class_lowerbound = size_col/4; 			%number of D0's lower bound = 1/4 Di^
+column_now  = 0;
+Shared_class_full = 0;
+
+while(SharedD_nClass < num_class_lowerbound && Shared_class_full ==0)
+	column_now += 1;
+	fprintf(['column_now = ' num2str(column_now) '\n']);
+	Shared_class_exist = zeros(1, opts.nClass);		%to check if the class already exist in the D0
+
+	for i= 1:opts.nClass-1
+		fprintf(['Now class = ' num2str(i) '\n']);
+		if(size(Dict_ini(:, Dlabel_ini==i),2) < column_now)
+			break;
+		end
 		temp_dic_i = Dict_ini(:, Dlabel_ini==i);
-		temp_dic_j = Dict_ini(:, Dlabel_ini==j);
+		for j= i+1: opts.nClass
+			if(size(Dict_ini(:, Dlabel_ini==j),2) >= column_now)
+				temp_dic_j = Dict_ini(:, Dlabel_ini==j);
 
-		%counting inner product(only the first column)
-		inner_ans=sum(temp_dic_i(:,1).*temp_dic_j(:,1));
+				%counting inner product
+				inner_ans=sum(temp_dic_i(:,column_now).*temp_dic_j(:,column_now));
 
-		if (inner_ans > threshold)
-			if (Shared_class_exist(1,i)==0)		%%never been put in
-				SharedD_nClass +=1;
-				SharedDict_ini= [SharedDict_ini temp_dic_i(:,1)];		%put the first column of the 
-				SharedDlabel_oriDic_ini = [SharedDlabel_oriDic_ini repmat(i,[1 1])];
-				Shared_class_exist(1,i)=1;
+				if (inner_ans > threshold)					%%put into D0
+					if (Shared_class_exist(1,i)==0)			%%never been put in
+						SharedD_nClass +=1;
+						SharedDict_ini= [SharedDict_ini temp_dic_i(:,column_now)];		
+						SharedDlabel_oriDic_ini = [SharedDlabel_oriDic_ini repmat(i,[1 1])];
+						Shared_class_exist(1,i)=1;
+					end
+					if (Shared_class_exist(1,j)==0)	
+						SharedD_nClass +=1;
+						SharedDict_ini= [SharedDict_ini temp_dic_j(:,column_now)];
+						SharedDlabel_oriDic_ini = [SharedDlabel_oriDic_ini repmat(j,[1 1])];
+						Shared_class_exist(1,j)=1;
+					end	
+				end
+				if(SharedD_nClass >= num_class_upperbound)
+					Shared_class_full = 1;
+					break;
+				end
 			end
-			if (Shared_class_exist(1,j)==0)	
-				SharedD_nClass +=1;
-				SharedDict_ini= [SharedDict_ini temp_dic_j(:,1)];
-				SharedDlabel_oriDic_ini = [SharedDlabel_oriDic_ini repmat(j,[1 1])];
-				Shared_class_exist(1,j)=1;
-			end	
+		end
+
+		%%store di^
+		if (Shared_class_exist(1,i)==1)
+			col_delete = temp_dic_i(:,column_now);
+			num_col_delete = find(ismember(HeadDict_ini',col_delete','rows'),1);
+			HeadDict_ini(:,num_col_delete) = []; 
+			HeadDictLabel_ini(:,num_col_delete) = [];
+		end
+
+		if(Shared_class_full==1)
+			break;
 		end
 	end
+	fprintf(['SharedD_nClass = ' num2str(SharedD_nClass) '\n'])
 
-	num_col = size(temp_dic_i, 2);			%%store di^
-	if (Shared_class_exist(1,i)==1)
-		HeadDict_ini = [HeadDict_ini temp_dic_i(:, 2:num_col)];
-		HeadDictLabel_ini = [HeadDictLabel_ini repmat(i, [1 num_col-1])];
-	else
-		HeadDict_ini = [HeadDict_ini temp_dic_i];
-		HeadDictLabel_ini = [HeadDictLabel_ini repmat(i, [1 num_col])];
+	%%for the last class
+	Dict_lastClass = Dict_ini(:, Dlabel_ini==opts.nClass);
+	if (Shared_class_exist(1,opts.nClass)==1)	
+		col_delete = Dict_lastClass(:,column_now);
+		num_col_delete = find(ismember(HeadDict_ini',col_delete','rows'),1);
+		HeadDict_ini(:,num_col_delete) = []; 
+		HeadDictLabel_ini(:,num_col_delete) = [];
 	end
-end
-fprintf(['SharedD_nClass = ' num2str(SharedD_nClass) '\n'])
-
-%%for the last class
-Dict_lastClass = Dict_ini(:, Dlabel_ini==opts.nClass);
-num_col = size(Dict_lastClass, 2);
-if (Shared_class_exist(1,opts.nClass)==1)	
-	HeadDict_ini = [HeadDict_ini Dict_lastClass(:, 2:num_col)];
-	HeadDictLabel_ini = [HeadDictLabel_ini repmat(opts.nClass, [1 num_col-1])];
-else
-	HeadDict_ini = [HeadDict_ini Dict_lastClass];
-	HeadDictLabel_ini = [HeadDictLabel_ini repmat(opts.nClass, [1 num_col])];
 end
 
 
