@@ -31,7 +31,7 @@ TrainLabel(:,:,1) = TrainLabel_cat;
 TrainLabel(:,:,2) = TrainLabel_dog;
 
 for h = 1:2
-	fprintf(['initializing dict & coef, h=' num2str(h)]);
+	fprintf(['initializing dict & coef, h=' num2str(h) '\n']);
 
 	Dict  =  []; 
 	Dlabel = [];				
@@ -51,7 +51,7 @@ end
 %initialize shared dict
 %%%%%%%%%%%%%%%%%%%%%%%
 for h = 1:2
-	fprintf(['initializing shared dict, h = ' num2str(h)]);
+	fprintf(['initializing shared dict, h = ' num2str(h) '\n']);
 	[sdClass, sd, sdl, hd, hdl, td, tdl] = Ini_ShareD(Dict_ini(:,:,h), DLabel_ini(:,:,h), opts.nClass(h));
 	SharedD_nClass(h) = sdClass;
 	SharedDict_ini(:,:,h) = sd;
@@ -65,27 +65,33 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %use CVX to initialize Ai=[Ai0, Ai^],  ||Xi-[D0, Di^]Ai||2 + lambda*||Ai||1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-coef = [];
-HeadCoef = [];
-SharedCoef = [];
-fprintf(['Initalize coefficients \n']);
-for ci = 1:opts.nClass
-	fprintf(['Initalize coefficients, class:' num2str(ci) '\n']);
-	X  =    TrainDat(:,TrainLabel==ci);
-	D  =    TotalDict_ini(:,TotalDictLabel_ini ==ci);
-	A  =    zeros(size(D,2),size(X,2));
-	m  =	size(A,1);
-	n  =	size(A,2);
-	for j=1:n;
-		cvx_begin quiet
-			variable a(p);
-			minimize (norm(X(:,j)-D*a) + opts.lambda*norm(a,1));
-		cvx_end
-		A(:,j) = a;
+for h= 1:2
+	fprintf(['Initalize coefficients, h = ' num2str(h) '\n']);
+	coef_cvx = [];
+	HeadCoef_cvx = [];
+	SharedCoef_cvx = [];
+	for ci = 1:opts.nClass(h)
+		fprintf(['Initalize coefficients, class:' num2str(ci) '\n']);
+		X  =    TrainDat(:,TrainLabel(:,:,h)==ci,h);
+		D  =    TotalDict_ini(:,TotalDictLabel_ini(:,:,h) ==ci,h);
+		A  =    zeros(size(D,2),size(X,2));
+		m  =	size(A,1);
+		n  =	size(A,2);
+		for j=1:n;
+			cvx_begin quiet
+				variable a(p);
+				minimize (norm(X(:,j)-D*a) + opts.lambda*norm(a,1));
+			cvx_end
+			A(:,j) = a;
+		end
+		coef_cvx = [coef_cvx A];
+		SharedCoef_cvx = [SharedCoef_cvx A(1:SharedD_nClass(h), :)];
+		HeadCoef_cvx = [HeadCoef_cvx A(SharedD_nClass(h)+1:m, :)];
 	end
-	coef = [coef A];
-	SharedCoef = [SharedCoef A(1:SharedD_nClass, :)];
-	HeadCoef = [HeadCoef A(SharedD_nClass+1:m, :)];
+
+	coef(:,:,h) = coef_cvx;
+	HeadCoef(:,:,h) = HeadCoef_cvx;
+	SharedCoef(:,:,h) = SharedCoef_cvx;
 end
 %A = coef, coef_Label = TrainLaebel
 %Ai^ = HeadCoef
