@@ -65,7 +65,6 @@ tau          =    par.tau;
 lambda1      =    par.tau;
 eta2         =    par.eta;
 eta3         =    par.eta;
-eta4         =    par.eta;
 trls         =    ipts.trls;
 classn       =    length(unique(trls));
 nIter        =    par.nIter;
@@ -152,7 +151,7 @@ xm1       =      Xi;%A(:,trls==index); % now
 
 
 [gap] = Class_Energy(Ai,D,X0,xm1,Xa,drls,trls,index,...                           %%%
-        lambda1,eta2,eta3,eta4,classn);
+        lambda1,eta2,eta3,classn);
 prev_f   =   gap;
 ert(1) = gap;
 for n_it = 2 : nIter;
@@ -163,7 +162,7 @@ for n_it = 2 : nIter;
         % IPM estimate
          
         grad = Gradient_Comp(xm1,Xa,classn,index,...
-        eta2,eta3,eta4,trls,drls,newpar,...
+        eta2,eta3,trls,drls,newpar,...
         BAI,CJ);
     
         v        =   xm1(:)-grad./(2*sigma);
@@ -182,7 +181,7 @@ for n_it = 2 : nIter;
             xm2    =   (alpha-beta)*xm1 + (1-alpha)*xm2 + beta*x_temp;
             % compute residual
            [gap] = Class_Energy(Ai,D,X0,xm1,Xa,drls,trls,index,...                           %%%
-        lambda1,eta2,eta3,eta4,classn);
+        lambda1,eta2,eta3,classn);
 
            f   =   gap;
           
@@ -201,7 +200,7 @@ for n_it = 2 : nIter;
         else
           
         [gap] = Class_Energy(Ai,D,X0,xm1,Xa,drls,trls,index,...                           %%%
-        lambda1,eta2,eta3,eta4,classn);
+        lambda1,eta2,eta3,classn);
     
         f   =   gap;
          

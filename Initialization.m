@@ -1,17 +1,17 @@
 function [Dict,Drls,CoefM,CMlabel] = Initialization(TrainDat,TrainLabel,opts)
 %----------------------------------------------------------------------
 %
-%Input : (1) TrainDat: the training data matrix. 
-%                      Each column is a training sample
-%        (2) TrainLabel: the training data labels
-%        (3) opts      : the struture of parameters
-%               .nClass   the number of classes
-%               .lambda  the parameter of l1-norm energy of coefficient
-%               .eta  the parameter of l2-norm of coefficient term
-%               .nIter    the number of iteration
-%               .show     sign value of showing the gap sequence
+%Input : (1) TrainDat: 		the training data matrix. 
+%                      		Each column is a training sample
+%        (2) TrainLabel: 	the training data labels
+%        (3) opts      : 	the struture of parameters
+%               .nClass_cat   	the number of classes
+%               .nClass_dog  	the number of classes
+%               .lambda   		the parameter of l1-norm energy of coefficient
+%               .eta  	  		the parameter of l2-norm of coefficient term
+%               .nIter    		the number of iteration
 %
-%Output: (1) Dict:  the learnt dictionary via FDDL
+%Output: (1) Dict:  the learnt dictionary 
 %        (2) Drls:  the labels of learnt dictionary's columns
 %        (2) CoefM: Mean Coefficient Matrix. Each column is a mean coef
 %                   vector
@@ -164,7 +164,7 @@ end
 %%Ai0 = SharedCoef
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Main loop of 
+%Main loop 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 DL_par.dls        =    	TotalDictLabel_ini;
 DL_ipts.D         =     TotalDict_ini;   
@@ -172,6 +172,9 @@ DL_ipts.trls      =     TrainLabel;
 DL_par.tau        =     opts.lambda;
 DL_par.eta    	  =     opts.eta;
 DL_nit            =     1;
+SharedDict 		  =     SharedDict_ini;
+HeadDict 		  = 	HeadDict_ini;
+HeadDictLabel 	  = 	HeadDictLabel_ini;
 while DL_nit<=opts.nIter  
 	if size(DL_ipts.D,1)>size(DL_ipts.D,2)
 		DL_par.c        =    1.05*eigs(DL_ipts.D'*DL_ipts.D,1);
@@ -189,20 +192,23 @@ while DL_nit<=opts.nIter
         DL_par.index      			=  ci; 
         [Copts]             		=  UpdateCoef(DL_ipts,DL_par);
         coef(:,TrainLabel==ci)    	=  Copts.A;
+        SharedCoef(:,TrainLabel==ci)=  Copts.A(1:SharedD_nClass, :);
+        HeadCoef(:,TrainLabel==ci)  =  Copts.A(SharedD_nClass:end, :);
         CMlabel(ci)        			=  ci;
         CoefM(:,ci)         		=  mean(Copts.A,2);
     end
-    [GAP_coding(Fish_nit)]  =  Class_Energy(TrainDat,coef,opts.nClass,Fish_par,Fish_ipts) 	 
+    [GAP_coding(DL_nit)]  =  Total_Energy(TrainDat,coef,SharedCoef,opts.nClass,DL_par,DL_ipts);	 
 
     %------------------------------------------------------------
     %updating the dictionary Di^ : min||Xi - D0*Ai0 - Di^*Ai^||2
     %------------------------------------------------------------
     for ci = 1:opts.nClass
- 		Xi = TrainDat(:, TrainLabel==ci) - SharedDict_ini * SharedCoef(:, TrainLabel==ci);
+    	fprintf(['Updating Di^, class: ' num2str(ci) '\n'])
+ 		Xi = TrainDat(:, TrainLabel==ci) - SharedDict * SharedCoef(:, TrainLabel==ci);
     	c = 1;
-    	Dinit_ci = HeadDict_ini(:, HeadDictLabel_ini==ci);
+    	Dinit_ci = HeadDict(:, HeadDictLabel==ci);
     	Ai = HeadCoef(:, TrainLabel==ci);
-    	HeadDict(:, HeadDictLabel_ini==ci)   =  learn_basis_dual(TrainDat(:,TrainLabel==ci), Ai, c, Dinit_ci);
+    	HeadDict(:, HeadDictLabel==ci)   =  learn_basis_dual(TrainDat(:,TrainLabel==ci), Ai, c, Dinit_ci);
     end
 
     %------------------------------------------------------------
@@ -210,17 +216,26 @@ while DL_nit<=opts.nIter
     %------------------------------------------------------------
     fprintf(['Updating D0 \n'])
     A0 = HeadCoef;
-    Dinit_shared = SharedDict_ini;
+    Dinit_shared = SharedDict;
     c = 1;
     X0 = [];
     for ci = 1:opts.nClass
-    	Xi = TrainDat(:, TrainLabel==ci) - HeadDict(:, HeadDictLabel_ini==ci) * HeadCoef(:, TrainLabel==ci);
+    	Xi = TrainDat(:, TrainLabel==ci) - HeadDict(:, HeadDictLabel==ci) * HeadCoef(:, TrainLabel==ci);
     	X0 = [X0 Xi];
     end
 	SharedDict   = learn_basis_dual(X0, A0, c, Dinit_shared);
+
+	Dict 		= 	[HeadDict;SharedDict];
+	DL_ipts.D 	= 	Dict;
+	[GAP_Dict(DL_nit)]  =  Total_Energy(TrainDat,coef,SharedCoef,opts.nClass,DL_par,DL_ipts);	
+
+	DL_nit+=1;
 end
 
+subplot(1,2,1);plot(GAP_coding,'-*');title('GAP_coding');
+subplot(1,2,2);plot(GAP_dict,'-o');title('GAP_dict'); 
 
+return;
 
 
 

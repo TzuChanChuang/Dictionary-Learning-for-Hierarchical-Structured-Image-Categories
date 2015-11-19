@@ -1,4 +1,4 @@
-function [gap] = Class_Energy(Xi,D,A0,Ai,Aa,drls,trls,index,lambda1,eta2,eta3,eta4,classn)
+function [gap] = Class_Energy(Xi,D,A0,Ai,Aa,drls,trls,index,lambda1,eta2,eta3,classn)
 % ========================================================================
 % Class energy computation of FDDL, Version 1.0
 % Copyright(c) 2011  Meng YANG, Lei Zhang, Xiangchu Feng and David Zhang
@@ -8,15 +8,15 @@ function [gap] = Class_Energy(Xi,D,A0,Ai,Aa,drls,trls,index,lambda1,eta2,eta3,et
 %   
 % Input :   (1) Xi :  the data matrix of this class
 %           (2) D :   the whole dictionary
-%           (3) Ai:   the coefficient matrix of this class
-%           (4) Aa:   the coefficient matrix of the whole class
-%           (5) drls: labels of dictionary's column
-%           (6) trls: labels of training samples
-%           (7) index: label of class being processed
-%           (8) lambda1 : parameter of l1-norm energy of coefficient
-%           (9) eta2 : parameter of within-class scatter
-%           (10) eta3 : parameter of between-class scatter
-%%          (11) eta4:  parameter of l2-norm energy of coefficient
+%           (3) A0:   the shared coefficient matrix of the whole class
+%           (4) Ai:   the coefficient matrix of this class
+%           (5) Aa:   the coefficient matrix of the whole class
+%           (6) drls: labels of dictionary's column
+%           (7) trls: labels of training samples
+%           (8) index: label of class being processed
+%           (9) lambda1 : parameter of l1-norm energy of coefficient
+%           (10) eta2 : parameter of within-class scatter
+%           (11) eta3 : parameter of between-class scatter
 %           (12) classn:   the number of class
 % 
 % Outputs : (1) gap  :    the total energy of some class
@@ -25,7 +25,7 @@ function [gap] = Class_Energy(Xi,D,A0,Ai,Aa,drls,trls,index,lambda1,eta2,eta3,et
 
 gap3  =   0;
 gap4  =   0;
-GAP1  =   norm((Xi-D(:, drls==index)*Ai),'fro')^2;% only for one class, no effect
+GAP1  =   norm((Xi-D(:, drls==index)*Ai),'fro')^2;      % only for one class, no effect
 GAP2  =   lambda1*sum(abs(Ai(:)));%
     
 Aa(:,trls==index)  =  Ai;

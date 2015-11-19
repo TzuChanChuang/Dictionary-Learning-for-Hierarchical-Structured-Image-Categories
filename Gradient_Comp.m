@@ -1,4 +1,4 @@
-function grad = FDDL_Gradient_Comp(Xi,Xa,classn,index,eta2,eta3,eta4,...
+function grad = Gradient_Comp(Xi,Xa,classn,index,eta2,eta3,...
     trls,drls,newpar,BAI,CJ)
 % ========================================================================
 % IPM's Gradient computation of FDDL, Version 1.0
@@ -13,7 +13,6 @@ function grad = FDDL_Gradient_Comp(Xi,Xa,classn,index,eta2,eta3,eta4,...
 %           (4) index: label of class being processed
 %           (5) eta2 : parameter of within-class scatter
 %           (6) eta3 : parameter of between-class scatter
-%           (7) eta4:  parameter of l2-norm energy of coefficient
 %           (10) trls: labels of training samples
 %           (11) drls: labels of dictionary's column4433
 %           (12) newpar, BAI, and CJ: the precomputed data        
@@ -53,9 +52,6 @@ grad1    =   tem(:);
 tem       =   2*eta2*BiBi*XiT;
 grad4     =   tem(:);
 
-tem       =  2*eta4*XiT;
-grad9     =  tem(:);
-
 tem       =  -eta3*(2*BaiBai*XiT-2*BaiGxi);
 grad5     = tem(:);
 
@@ -68,7 +64,7 @@ for k = 1:classn
     end
 end
 
-grad456 = reshape(grad4+grad5+grad6+grad9,[n_d m])';
+grad456 = reshape(grad4+grad5+grad6,[n_d m])';
 grad456 = grad456(:);
 
 grad = grad1+grad456;
