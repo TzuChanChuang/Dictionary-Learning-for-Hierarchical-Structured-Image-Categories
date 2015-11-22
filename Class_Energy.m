@@ -1,4 +1,4 @@
-function [gap] = Class_Energy(Xi,D,A0,Ai,Aa,drls,trls,index,lambda1,eta2,eta3,classn)
+function [gap] = Class_Energy(Xi,D,A0,Ai,Aa,drls,trls,index,lambda1,eta2,eta3,eta_2,classn)
 % ========================================================================
 % Class energy computation of FDDL, Version 1.0
 % Copyright(c) 2011  Meng YANG, Lei Zhang, Xiangchu Feng and David Zhang
@@ -44,7 +44,7 @@ end
     
 gap3 = norm(Ai-repmat(mean(Ai,2),[1 n_c]),'fro')^2;
 
-GAP3 = eta2*gap3-eta3*gap4;
-
+GAP3 = eta2*gap3-eta3*gap4; %eta*(Sw-Sb)
+%GAP4 = eta_2*(gap5-gap6);
     
 gap = GAP1+GAP2+GAP3;

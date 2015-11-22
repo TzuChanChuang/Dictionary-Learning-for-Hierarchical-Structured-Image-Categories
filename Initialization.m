@@ -100,75 +100,81 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Main loop 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-DL_par.dls        =    	TotalDictLabel_ini;
-DL_ipts.D         =     TotalDict_ini;   
-DL_ipts.trls      =     TrainLabel;
 DL_par.tau        =     opts.lambda;
 DL_par.eta    	  =     opts.eta;
 DL_nit            =     1;
-SharedDict 		  =     SharedDict_ini;
-HeadDict 		  = 	HeadDict_ini;
-HeadDictLabel 	  = 	HeadDictLabel_ini;
-while DL_nit<=opts.nIter  
-	if size(DL_ipts.D,1)>size(DL_ipts.D,2)
-		DL_par.c        =    1.05*eigs(DL_ipts.D'*DL_ipts.D,1);
-    else
-      	DL_par.c        =    1.05*eigs(DL_ipts.D*DL_ipts.D',1);
-    end
-    %-------------------------
-    %updating the coefficient
-    %-------------------------
-    for ci = 1:opts.nClass
-        fprintf(['Updating coefficients, class: ' num2str(ci) '\n'])
-        DL_ipts.X         			=  TrainDat(:,TrainLabel==ci);
-        DL_ipts.A         			=  coef;
-        DL_ipts.SA         			=  SharedCoef;
-        DL_par.index      			=  ci; 
-        [Copts]             		=  UpdateCoef(DL_ipts,DL_par);
-        coef(:,TrainLabel==ci)    	=  Copts.A;
-        SharedCoef(:,TrainLabel==ci)=  Copts.A(1:SharedD_nClass, :);
-        HeadCoef(:,TrainLabel==ci)  =  Copts.A(SharedD_nClass:end, :);
-        CMlabel(ci)        			=  ci;
-        CoefM(:,ci)         		=  mean(Copts.A,2);
-    end
-    [GAP_coding(DL_nit)]  =  Total_Energy(TrainDat,coef,SharedCoef,opts.nClass,DL_par,DL_ipts);	 
 
-    %------------------------------------------------------------
-    %updating the dictionary Di^ : min||Xi - D0*Ai0 - Di^*Ai^||2
-    %------------------------------------------------------------
-    for ci = 1:opts.nClass
-    	fprintf(['Updating Di^, class: ' num2str(ci) '\n'])
- 		Xi = TrainDat(:, TrainLabel==ci) - SharedDict * SharedCoef(:, TrainLabel==ci);
-    	c = 1;
-    	Dinit_ci = HeadDict(:, HeadDictLabel==ci);
-    	Ai = HeadCoef(:, TrainLabel==ci);
-    	HeadDict(:, HeadDictLabel==ci)   =  learn_basis_dual(TrainDat(:,TrainLabel==ci), Ai, c, Dinit_ci);
-    end
 
-    %------------------------------------------------------------
-    %updating the dictionary D0 : min||X0 - D0*Ai0||2
-    %------------------------------------------------------------
-    fprintf(['Updating D0 \n'])
-    A0 = HeadCoef;
-    Dinit_shared = SharedDict;
-    c = 1;
-    X0 = [];
-    for ci = 1:opts.nClass
-    	Xi = TrainDat(:, TrainLabel==ci) - HeadDict(:, HeadDictLabel==ci) * HeadCoef(:, TrainLabel==ci);
-    	X0 = [X0 Xi];
-    end
-	SharedDict   = learn_basis_dual(X0, A0, c, Dinit_shared);
+while DL_nit<=opts.nIter
+	for h= 1:2
+		DL_par.dls        =     TotalDictLabel_ini(:,:,h);
+		DL_ipts.D         =     TotalDict_ini(:,:,h);   
+		DL_ipts.trls      =     TrainLabel(:,:,h);
+		SharedDict 		  =     SharedDict_ini(:,:,h);
+		HeadDict 		  = 	HeadDict_ini(:,:,h);
+		HeadDictLabel 	  = 	HeadDictLabel_ini(:,:,h);
+		if size(DL_ipts.D,1)>size(DL_ipts.D,2)
+			DL_par.c        =    1.05*eigs(DL_ipts.D'*DL_ipts.D,1);
+	    else
+	      	DL_par.c        =    1.05*eigs(DL_ipts.D*DL_ipts.D',1);
+	    end
+	    %-------------------------
+	    %updating the coefficient
+	    %-------------------------
 
-	Dict 		= 	[HeadDict;SharedDict];
-	DL_ipts.D 	= 	Dict;
-	[GAP_Dict(DL_nit)]  =  Total_Energy(TrainDat,coef,SharedCoef,opts.nClass,DL_par,DL_ipts);	
+	    for ci = 1:opts.nClass(h)
+	        fprintf(['Updating coefficients, upperclass' num2str(h) 'class: ' num2str(ci) '\n'])
+	        DL_ipts.X         			=  TrainDat(:,TrainLabel(:,:,h)==ci,h);
+	        DL_ipts.A         			=  coef(:,:,h);
+	        DL_ipts.SA         			=  SharedCoef(:,:,h);
+	        DL_par.index      			=  ci;
+	        [Copts]             		=  UpdateCoef(DL_ipts,DL_par);
+	        coef(:,TrainLabel(:,:,h)==ci,h)    	  =  Copts.A;
+	        SharedCoef(:,TrainLabel(:,:,h)==ci,h) =  Copts.A(1:SharedD_nClass(h), :);
+	        HeadCoef(:,TrainLabel(:,:,h)==ci,h)   =  Copts.A(SharedD_nClass(h)+1:end, :);
+	        CMlabel(1,ci,h)        		=  ci;
+	        CoefM(:,ci,h)         		=  mean(Copts.A,2);
+	    end
+	    [GAP_coding(h, DL_nit)]  =  Total_Energy(TrainDat(:,:,h),coef(:,:,h),SharedCoef(:,:,h),opts.nClass(h),DL_par,DL_ipts);	 
+
+	    %------------------------------------------------------------
+	    %updating the dictionary Di^ : min||Xi - D0*Ai0 - Di^*Ai^||2
+	    %------------------------------------------------------------
+	    for ci = 1:opts.nClass(h)
+	    	fprintf(['Updating Di^, upperclass' num2str(h) 'class: ' num2str(ci) '\n'])
+	 		Xi = TrainDat(:, TrainLabel(:,:,h)==ci, h) - SharedDict(:,:,h) * SharedCoef(:, TrainLabel(:,:,h)==ci, h);
+	    	c = 1;
+	    	Dinit_ci = HeadDict(:, HeadDictLabel(:,:,h)==ci, h);
+	    	Ai = HeadCoef(:, TrainLabel(:,:,h)==ci, h);
+	    	HeadDict(:, HeadDictLabel(:,:,h)==ci, h)   =  learn_basis_dual(TrainDat(:,TrainLabel(:,:,h)==ci, h), Ai, c, Dinit_ci);
+	    end
+
+	    %------------------------------------------------------------
+	    %updating the dictionary D0 : min||X0 - D0*Ai0||2
+	    %------------------------------------------------------------
+	    fprintf(['Updating D0 , upperclass' num2str(h) '\n'])
+	    A0 = HeadCoef(:,:,h);
+	    Dinit_shared = SharedDict(:,:,h);
+	    c = 1;
+	    X0 = [];
+	    for ci = 1:opts.nClass(h)
+	    	Xi = TrainDat(:, TrainLabel(:,:,h)==ci, h) - HeadDict(:, HeadDictLabel(:,:,h)==ci, h) * HeadCoef(:, TrainLabel(:,:,h)==ci, h);
+	    	X0 = [X0 Xi];
+	    end
+		SharedDict(:,:,h)   = learn_basis_dual(X0, A0, c, Dinit_shared);
+
+		Dict(:,:,h) 		= 	[HeadDict(:,:,h);SharedDict(:,:,h)];
+		DL_ipts.D 	= 	Dict;
+		[GAP_Dict(h, DL_nit)]  =  Total_Energy(TrainDat(:,:,h),coef(:,:,h),SharedCoef(:,:,h),opts.nClass(h),DL_par,DL_ipts);	
+	end
 
 	DL_nit+=1;
 end
 Drls = Dlabel_ini;
 
-subplot(1,2,1);plot(GAP_coding,'-*');title('GAP_coding');
-subplot(1,2,2);plot(GAP_dict,'-o');title('GAP_dict'); 
+figure;
+subplot(1,2,1); plot(GAP_coding(1),'-*'); hold on; plot(GAP_coding(2),'-o'); hold off; title('GAP_coding');
+subplot(1,2,2); plot(GAP_dict(1),'-*'); hold on; plot(GAP_dict(2),'-o'); hold off; title('GAP_dict'); 
 
 return;
 

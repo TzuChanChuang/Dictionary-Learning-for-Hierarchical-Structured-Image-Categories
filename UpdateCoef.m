@@ -57,10 +57,10 @@ par.cT       =     1e+10; % stop criterion
 
 m            =    size(ipts.D,2);
 drls         =    par.dls;  
-D            =    ipts.D;
-X            =    ipts.X;
-A            =    ipts.A;
-SA           =    ipts.SA;                                                                      %%%
+D            =    ipts.D;       %the whole dictionary
+X            =    ipts.X;       %the training data of the class
+A            =    ipts.A;       %the whole coef
+SA           =    ipts.SA;      %the whole shared coef
 tau          =    par.tau;
 lambda1      =    par.tau;
 eta2         =    par.eta;
