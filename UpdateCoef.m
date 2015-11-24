@@ -33,14 +33,17 @@ function [opts] = UpdateCoef(ipts,par)
 %----------------------------------------------------------------------
 %
 %  Inputs :   (1) ipts :    the structre of input data
-%                    .D     the dictionary                                                      %%%Total Dictionary
+%                    .D     the total dictionary                                                      
 %                    .X     the ith training data
 %                    .A     the coefficient matrix in the last iteration
-%                    .SA    the shared coefficient matrix                                       %%%
+%                    .SA    the shared coefficient matrix                                       
+%                    .MUSA  the mean of all the shared coefficient matrix
+%                    .HA    the head coefficient matrix in the last iteration                                      
 %                    .trls  the labels of training data
 %             (2) par :     the struture of input parameters
 %                    .tau   the parameter of sparse constraint of coef
 %                    .eta   the parameter of within-class scatter
+%                    .eta_2   the parameter of upper within-class scatter
 %                    .dls     the labels of dictionary's columns
 %                    .index   the label of the class being processed
 %
@@ -61,10 +64,13 @@ D            =    ipts.D;       %the whole dictionary
 X            =    ipts.X;       %the training data of the class
 A            =    ipts.A;       %the whole coef
 SA           =    ipts.SA;      %the whole shared coef
+MUSA         =    ipts.MUSA;    %the mean of upper classes' coef
+HA           =    ipts.HA;
 tau          =    par.tau;
 lambda1      =    par.tau;
 eta2         =    par.eta;
 eta3         =    par.eta;
+eta_2        =    par.eta_2;
 trls         =    ipts.trls;
 classn       =    length(unique(trls));
 nIter        =    par.nIter;
@@ -94,7 +100,9 @@ beta               =         alpha*2/(lam1+lamN);         %default,user can set
 %%%%%%%%%%%%%%%%%%%%%%%%
 Ai                 =          X;  % the i-th training data
 Xa                 =          A;  
-X0                 =          SA;                                                               %%%
+X0                 =          SA;
+X0_MU              =          MUSA;
+Xh                 =          HA;                    
 Xi                 =          A(:,trls==index);
 Xt_now             =          A(:,trls==index);
 
@@ -129,7 +137,6 @@ Di0                 =   D;
 Di0(:,drls~=index)  =   0;
 newpar.Di0Di0       =   (Di0)'*Di0;
 newpar.Di0Ai        =   (Di0)'*Ai;
-
 newpar.DoiDoi       =   zeros(size(D,2));
 for t_i  =  1:classn
     if t_i ~= index
@@ -150,8 +157,8 @@ xm2       =      Xi;%A(:,trls==index);
 xm1       =      Xi;%A(:,trls==index); % now
 
 
-[gap] = Class_Energy(Ai,D,X0,xm1,Xa,drls,trls,index,...                           %%%
-        lambda1,eta2,eta3,classn);
+[gap] = Class_Energy(Ai,D,X0,X0_MU,Xh,xm1,Xa,drls,trls,index,...                           
+        lambda1,eta2,eta3,eta_2,classn);
 prev_f   =   gap;
 ert(1) = gap;
 for n_it = 2 : nIter;
@@ -180,10 +187,11 @@ for n_it = 2 : nIter;
             % two-step iteration
             xm2    =   (alpha-beta)*xm1 + (1-alpha)*xm2 + beta*x_temp;
             % compute residual
-           [gap] = Class_Energy(Ai,D,X0,xm1,Xa,drls,trls,index,...                           %%%
-        lambda1,eta2,eta3,classn);
+           
+            [gap] = Class_Energy(Ai,D,X0,X0_MU,Xh,xm1,Xa,drls,trls,index,...                           
+            lambda1,eta2,eta3,eta_2,classn);
 
-           f   =   gap;
+            f   =   gap;
           
             if (f > prev_f) & (enforceMonotone)
                 TwIST_iters   =  0;  % do a IST iteration if monotonocity fails
@@ -199,29 +207,30 @@ for n_it = 2 : nIter;
             end
         else
           
-        [gap] = Class_Energy(Ai,D,X0,xm1,Xa,drls,trls,index,...                           %%%
-        lambda1,eta2,eta3,classn);
+        
+        [gap] = Class_Energy(Ai,D,X0,X0_MU,Xh,xm1,Xa,drls,trls,index,...                           
+        lambda1,eta2,eta3,eta_2,classn);
     
         f   =   gap;
          
-         if f > prev_f
-                % if monotonicity  fails here  is  because
-                % max eig (A'A) > 1. Thus, we increase our guess
-                % of max_svs
-                c         =    2*c;  
-                sigma     =    c;
-                if verbose
-%                     fprintf('Incrementing c=%2.2e\n',c);
-                end
-                if  c > par.cT
-                    break;  % break loop while    
-                end
-                IST_iters = 0;
-                TwIST_iters = 0;
-           else
+        if f > prev_f
+            % if monotonicity  fails here  is  because
+            % max eig (A'A) > 1. Thus, we increase our guess
+            % of max_svs
+            c         =    2*c;  
+            sigma     =    c;
+            if verbose
+%               fprintf('Incrementing c=%2.2e\n',c);
+            end
+            if  c > par.cT
+                break;  % break loop while    
+            end
+            IST_iters = 0;
+            TwIST_iters = 0;
+            else
                 TwIST_iters = TwIST_iters + 1;
                 break;  % break loop while
-           end
+            end
         end
         
     end
