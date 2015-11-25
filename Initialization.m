@@ -150,8 +150,15 @@ while DL_nit<=opts.nIter
 	        CMlabel(1,ci,h)        		=  ci;
 	        CoefM(:,ci,h)         		=  mean(Copts.A,2);
 	    end
+	    %MUSA after updating coef
+	    upperSC	= [];
+	    for h2= 1:2		
+			upperSC += [upperSC SharedCoef(:,:,h2)];
+		end
+		mean_upperSC = mean(upperSC,2);
+		DL_ipts.MUSA =  mean_upperSC;
 	                                
-	    [GAP_coding(h, DL_nit)]  =  Total_Energy(TrainDat(:,:,h),coef(:,:,h),SharedCoef(:,:,h),opts.nClass(h),DL_par,DL_ipts);	 
+	    [GAP_coding(h, DL_nit)]  =  Total_Energy(TrainDat(:,:,h),coef(:,:,h),SharedCoef(:,:,h),HeadCoef(:,:,h),opts.nClass(h),DL_par,DL_ipts);	 
 
 	    %------------------------------------------------------------
 	    %updating the dictionary Di^ : min||Xi - D0*Ai0 - Di^*Ai^||2
@@ -185,7 +192,7 @@ while DL_nit<=opts.nIter
 			Dict(:,DictLabel==ci,h) = [SharedDict(:,:,h) HeadDict(:,HeadDictLabel(:,:,h)==ci,h)];
 		end
 		DL_ipts.D 	= 	Dict;
-		[GAP_Dict(h, DL_nit)]  =  Total_Energy(TrainDat(:,:,h),coef(:,:,h),SharedCoef(:,:,h),opts.nClass(h),DL_par,DL_ipts);	
+		[GAP_Dict(h, DL_nit)]  =  Total_Energy(TrainDat(:,:,h),coef(:,:,h),SharedCoef(:,:,h),HeadCoef(:,:,h),opts.nClass(h),DL_par,DL_ipts);	
 	end
 
 	DL_nit+=1;

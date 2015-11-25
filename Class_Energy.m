@@ -19,7 +19,7 @@ function [gap] = Class_Energy(Xi,D,A0,MUA0,HA,Ai,Aa,drls,trls,index,lambda1,eta2
 %           (11) lambda1 : parameter of l1-norm energy of coefficient
 %           (12) eta2 : parameter of within-class scatter
 %           (13) eta3 : parameter of between-class scatter
-%           (14) eta3 : parameter of upper within and between-class scatter
+%           (14) eta_2 : parameter of upper within and between-class scatter
 %           (15) classn:   the number of class
 % 
 % Outputs : (1) gap  :    the total energy of some class
