@@ -110,13 +110,16 @@ HeadDict 		  = 	HeadDict_ini;
 HeadDictLabel 	  = 	HeadDictLabel_ini;
 Dict 			  = 	TotalDict_ini;
 DictLabel 		  = 	TotalDictLabel_ini;
+DL_ipts.totalX    =     TrainDat;
 
 while DL_nit<=opts.nIter
 	fprintf(['Main loop, iteration: ' num2str(DL_nit) '\n']);
 	%%%%%the mean of all the shared coef of all upper classes
 	upperSC	= [];	
+	upperSC_Label = [];
 	for h= 1:2		
-		upperSC += [upperSC SharedCoef(:,:,h)];
+		upperSC = [upperSC SharedCoef(:,:,h)];
+		upperSC_Label = [upperSC_Label repmat(h,[1 size(SharedCoef(:,:,h),2)])];
 	end
 	mean_upperSC = mean(upperSC,2);
 	%%%%%
@@ -124,7 +127,10 @@ while DL_nit<=opts.nIter
 		DL_par.dls        =     DictLabel(:,:,h);
 		DL_ipts.D         =     Dict(:,:,h);   
 		DL_ipts.trls      =     TrainLabel(:,:,h);
-		
+		DL_ipts.SA_up     =		upperSC;
+		DL_ipts.SA_up_l   =		upperSC_Label;
+		DL_par.index_h    =     h;
+		DL_par.m_up 	  =     size(SharedDict,2)* 2; %(2 = number of upper classes);
 
 		if size(DL_ipts.D,1)>size(DL_ipts.D,2)
 			DL_par.c        =    1.05*eigs(DL_ipts.D'*DL_ipts.D,1);
@@ -153,10 +159,13 @@ while DL_nit<=opts.nIter
 	    %MUSA after updating coef
 	    upperSC	= [];
 	    for h2= 1:2		
-			upperSC += [upperSC SharedCoef(:,:,h2)];
+			upperSC = [upperSC SharedCoef(:,:,h2)];
+			upperSC_Label = [upperSC_Label repmat(h2,[1 size(SharedCoef(:,:,h2),2)])];
 		end
 		mean_upperSC = mean(upperSC,2);
 		DL_ipts.MUSA =  mean_upperSC;
+		DL_ipts.SA_up     =		upperSC;
+		DL_ipts.SA_up_l   =		upperSC_Label;
 	                                
 	    [GAP_coding(h, DL_nit)]  =  Total_Energy(TrainDat(:,:,h),coef(:,:,h),SharedCoef(:,:,h),HeadCoef(:,:,h),opts.nClass(h),DL_par,DL_ipts);	 
 

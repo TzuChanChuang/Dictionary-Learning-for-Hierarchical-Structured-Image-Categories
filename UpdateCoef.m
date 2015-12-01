@@ -40,13 +40,17 @@ function [opts] = UpdateCoef(ipts,par)
 %                    .MUSA  the mean of all the shared coefficient matrix
 %                    .HA    the head coefficient matrix in the last iteration                                      
 %                    .trls  the labels of training data
+%                    .totalX     the training data of all the upper classes
+%                    .SA_up      all the upper classes' coefficient matrix
+%                    .SA_up_l    the label of all the upper classes' coefficient matrix
 %             (2) par :     the struture of input parameters
 %                    .tau   the parameter of sparse constraint of coef
 %                    .eta   the parameter of within-class scatter
 %                    .eta_2   the parameter of upper within-class scatter
 %                    .dls     the labels of dictionary's columns
 %                    .index   the label of the class being processed
-%
+%                    .index_h     the label of the upper class being processed
+%                    .m_up    the number of upper classes' dictionary column atoms
 % Outputs:    (1) opts :    the structure of output data
 %                    .A     the coefficient matrix
 %                    .ert   the total energy sequence
@@ -59,11 +63,15 @@ par.citeT    =     1e-6;  % stop criterion
 par.cT       =     1e+10; % stop criterion
 
 m            =    size(ipts.D,2);
+m_up         =    par.m_up;
 drls         =    par.dls;  
 D            =    ipts.D;       %the whole dictionary
 X            =    ipts.X;       %the training data of the class
+X_up         =    ipts.totalX;
 A            =    ipts.A;       %the whole coef
 SA           =    ipts.SA;      %the whole shared coef
+SA_up        =    ipts.SA_up;
+SA_up_l      =    ipts.SA_up_l;
 MUSA         =    ipts.MUSA;    %the mean of upper classes' coef
 HA           =    ipts.HA;
 tau          =    par.tau;
@@ -78,6 +86,7 @@ c            =    par.c;
 sigma        =    c;
 tau1         =    tau/2;
 index        =    par.index;
+index_h      =    par.index_h;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %TWIST parameter
@@ -99,38 +108,67 @@ beta               =         alpha*2/(lam1+lamN);         %default,user can set
 %preprocessing
 %%%%%%%%%%%%%%%%%%%%%%%%
 Ai                 =          X;  % the i-th training data
+A_up               =          X_up;
 Xa                 =          A;  
 X0                 =          SA;
+X0_up              =          SA_up;
+X0_up_label        =          SA_up_l;
 X0_MU              =          MUSA;
 Xh                 =          HA;                    
 Xi                 =          A(:,trls==index);
 Xt_now             =          A(:,trls==index);
 
 newpar.n_d          =   size(Ai,2);             % the sample number of i-th training data
-n                   =   size(Xa,2);             % the total sample number of training data
+newpar.n            =   size(Xa,2);             % the total sample number of training data
+n                   =   newpar.n;
+newpar.n_up         =   size(A_up) * 2;         % the total sample number of upper classes' training data(2= number of upper classes)
+n_up                =   newpar.n_up;
+
 
 for ci = 1:classn
     t_n_d = sum(trls==ci);
     t_b_line_i     =   ones(t_n_d,newpar.n_d)./t_n_d;
-    t_c_j = ones(t_n_d,newpar.n_d)./n;
+    t_c_j = ones(t_n_d,newpar.n_d)./newpar.n;
     t_b_angle_i           =   t_b_line_i-t_c_j;   
     CJ(ci).M  = t_c_j;
     BAI(ci).M = t_b_angle_i;   
 end
 
+for ci = 1:2
+    t_n_d = sum(SA_up_l==ci);
+    t_b_line_i     =   ones(t_n_d,newpar.n)./t_n_d;
+    t_c_j = ones(t_n_d,newpar.n)./newpar.n_up;
+    t_b_angle_i           =   t_b_line_i-t_c_j;   
+    CJ_up(ci).M  = t_c_j;
+    BAI_up(ci).M = t_b_angle_i;   
+end
+
 newpar.B_line_i     =   ones(newpar.n_d,newpar.n_d)./newpar.n_d;
-newpar.C_j          =   ones(newpar.n_d,newpar.n_d)./n;
+newpar.B_line_i_up  =   ones(newpar.n,newpar.n)./newpar.n;
+newpar.C_j          =   ones(newpar.n_d,newpar.n_d)./newpar.n;
+newpar.C_j_up       =   ones(newpar.n,newpar.n)./newpar.n_up;
 newpar.CjCj         =   (newpar.C_j)*(newpar.C_j)';
-newpar.C_line       =   ones(n,newpar.n_d)./n;
+newpar.CjCj_up      =   (newpar.C_j_up)*(newpar.C_j_up)';
+newpar.C_line       =   ones(newpar.n,newpar.n_d)./newpar.n;
+newpar.C_line_up    =   ones(newpar.n_up,newpar.n)./newpar.n_up;
 B_i                 =   eye(newpar.n_d,newpar.n_d)-newpar.B_line_i;
+B_i_up              =   eye(newpar.n,newpar.n)-newpar.B_line_i_up;
 newpar.BiBi         =   B_i*(B_i)';
+newpar.BiBi_up      =   B_i_up*(B_i_up)';
 B_angle_i           =   newpar.B_line_i-newpar.C_j;
+B_angle_i_up        =   newpar.B_line_i_up-newpar.C_j_up;
 newpar.Bai          =   B_angle_i;
+newpar.Bai_up       =   B_angle_i_up;
 newpar.BaiBai       =   B_angle_i*(B_angle_i)';
+newpar.BaiBai_up    =   B_angle_i_up*(B_angle_i_up)';
 Xo                  =   Xa;
 Xo(:,trls==index)   =   0;
+Xo_up               =   X0_up;
+Xo_up(:,X0_up_label==index_h) =   0;
 G_X_i               =   Xo*newpar.C_line;
+G_X_i_up            =   Xo_up*newpar.C_line_up;
 newpar.BaiGxi       =   B_angle_i*(G_X_i)';
+newpar.BaiGxi_up    =   B_angle_i_up*(G_X_i_up)';
 newpar.DD           =   D'*D;
 newpar.DAi          =   D'*Ai;
 Di0                 =   D;
@@ -147,6 +185,7 @@ for t_i  =  1:classn
 end
 
 newpar.m            =   m;                 % the number of dictionary column atoms
+newpar.m_up         =   m_up;              % the number of upper classes' dictionary column atoms
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %main loop
@@ -168,9 +207,9 @@ for n_it = 2 : nIter;
    while for_ever
         % IPM estimate
          
-        grad = Gradient_Comp(xm1,Xa,classn,index,...
-        eta2,eta3,trls,drls,newpar,...
-        BAI,CJ);
+        grad = Gradient_Comp(xm1,Xa,X0,X0_up,X0_up_label,classn,index,index_h,...
+        eta2,eta3,eta_2,trls,drls,newpar,...
+        BAI,CJ,BAI_up,CJ_up);
     
         v        =   xm1(:)-grad./(2*sigma);
         tem      =   soft(v,tau1/sigma);
