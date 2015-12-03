@@ -27,12 +27,13 @@ function [SharedD_nClass, SharedDict_ini, SharedDlabel_oriDic_ini, HeadDict_ini,
 	SharedD_nClass = 0;	
 	%Shared_class_exist = zeros(1, opts.nClass);		%to check if the class already exist in the D0
 	size_col = size(Dict_ini(:, Dlabel_ini==1),2);
-	num_class_upperbound = size_col/2; 			 %number of D0's upper bound = 1/2 Di^
-	num_class_lowerbound = size_col/4; 			%number of D0's lower bound = 1/4 Di^
+	%num_class_upperbound = size_col/2; 			 %number of D0's upper bound = 1/2 Di^
+	%num_class_lowerbound = size_col/4; 			%number of D0's lower bound = 1/4 Di^
+	num_class_fixed = size_col/3;
 	column_now  = 0;
-	Shared_class_full = 0;
+	%Shared_class_full = 0;
 
-	while(SharedD_nClass < num_class_lowerbound && Shared_class_full ==0)
+	while(SharedD_nClass < num_class_fixed)
 		column_now += 1;
 		fprintf(['column_now = ' num2str(column_now) '\n']);
 		Shared_class_exist = zeros(1, opts.nClass);		%to check if the class already exist in the D0
@@ -64,10 +65,6 @@ function [SharedD_nClass, SharedDict_ini, SharedDlabel_oriDic_ini, HeadDict_ini,
 							Shared_class_exist(1,j)=1;
 						end	
 					end
-					if(SharedD_nClass >= num_class_upperbound)
-						Shared_class_full = 1;
-						break;
-					end
 				end
 			end
 
@@ -77,10 +74,6 @@ function [SharedD_nClass, SharedDict_ini, SharedDlabel_oriDic_ini, HeadDict_ini,
 				num_col_delete = find(ismember(HeadDict_ini',col_delete','rows'),1);
 				HeadDict_ini(:,num_col_delete) = []; 
 				HeadDictLabel_ini(:,num_col_delete) = [];
-			end
-
-			if(Shared_class_full==1)
-				break;
 			end
 		end
 		fprintf(['SharedD_nClass = ' num2str(SharedD_nClass) '\n'])
