@@ -2,7 +2,6 @@ close all;
 clear all;
 clc;
 
-addpath([cd '/utilies']);
 load(['catsndogs']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%

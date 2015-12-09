@@ -204,7 +204,7 @@ while DL_nit<=opts.nIter
 		[GAP_Dict(h, DL_nit)]  =  Total_Energy(TrainDat(:,:,h),coef(:,:,h),SharedCoef(:,:,h),HeadCoef(:,:,h),opts.nClass(h),DL_par,DL_ipts);	
 	end
 
-	DL_nit+=1;
+	DL_nit = DL_nit+1;
 end
 Drls = Dlabel_ini;
 

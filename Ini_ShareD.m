@@ -34,7 +34,7 @@ function [SharedD_nClass, SharedDict_ini, SharedDlabel_oriDic_ini, HeadDict_ini,
 	%Shared_class_full = 0;
 
 	while(SharedD_nClass < num_class_fixed)
-		column_now += 1;
+		column_now = column_now + 1;
 		fprintf(['column_now = ' num2str(column_now) '\n']);
 		Shared_class_exist = zeros(1, opts.nClass);		%to check if the class already exist in the D0
 
@@ -53,13 +53,13 @@ function [SharedD_nClass, SharedDict_ini, SharedDlabel_oriDic_ini, HeadDict_ini,
 
 					if (inner_ans > threshold)					%put into D0
 						if (Shared_class_exist(1,i)==0)			%never been put in
-							SharedD_nClass +=1;
+							SharedD_nClass = SharedD_nClass+1;
 							SharedDict_ini= [SharedDict_ini temp_dic_i(:,column_now)];		
 							SharedDlabel_oriDic_ini = [SharedDlabel_oriDic_ini repmat(i,[1 1])];
 							Shared_class_exist(1,i)=1;
 						end
 						if (Shared_class_exist(1,j)==0)	
-							SharedD_nClass +=1;
+							SharedD_nClass = SharedD_nClass+1;
 							SharedDict_ini= [SharedDict_ini temp_dic_j(:,column_now)];
 							SharedDlabel_oriDic_ini = [SharedDlabel_oriDic_ini repmat(j,[1 1])];
 							Shared_class_exist(1,j)=1;
