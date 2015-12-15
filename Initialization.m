@@ -38,6 +38,7 @@ for h = 1:2
 	Dlabel = [];				
 
 	for ci = 1:opts.nClass(h)
+        fprintf(['class=' num2str(h) '\n']);
 	    cdat          			=    TrainDat(:,TrainLabel(:,:,h)==ci,h);
 	    [d, coef_ini]			=    K_SVD(cdat, opts.nIter);
 	    Dict      				=    [Dict d];

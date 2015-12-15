@@ -1,8 +1,8 @@
-close all;
+close all;  
 clear all;
 clc;
 
-load(['catsndogs']);
+load(['catndog.mat']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %FDDL parameter
@@ -13,4 +13,4 @@ opts.lambda       	=   0.15;
 opts.eta       		=   0.1;
 opts.eta_2          =   0.1;
 opts.nIter         	=   15;
-[Dict,Drls,CoefM,CMlabel] = Initialization(cats, cat_trls, dogs, dog_trls, opts);
+[Dict_ini,Dlabel_ini] = Initialization(cat_f, cat_t, dog_f, dog_t, opts);

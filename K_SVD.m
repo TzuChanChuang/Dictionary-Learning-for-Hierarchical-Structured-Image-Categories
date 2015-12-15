@@ -1,10 +1,4 @@
-function [Dictionary,output.CoefMatrix] = KSVD(...  
-
-   Data,... % an nXN matrix that contins N signals (Y), each of dimension n.  
-
-   nIter,...  %number of iteration
-   
-   )  
+function [Dictionary, CoefMatrix ] = KSVD(Data,nIter)  
 
 % =========================================================================  
 
@@ -39,7 +33,7 @@ function [Dictionary,output.CoefMatrix] = KSVD(...
 %                                 Required fields are:  
 
 %    K, ...                    the number of dictionary elements to train  
-param.K= size(Data,1) * size(Data,2);
+param.K= size(Data,2);
 
 %    numIteration,...          number of iterations to perform.  
 param.numIteration= nIter;
@@ -196,15 +190,15 @@ if (size(Data,2) < param.K)
 
    return;  
 
-   %若参数K大于信号的个数 则将数据集作为字典集  
+   %?��??�K大�?信号?�个???��??�据?��?为�??��?  
 
 elseif (strcmp(param.InitializationMethod,'DataElements'))  
 
-   Dictionary(:,1:param.K-param.preserveDCAtom) = Data(:,1:param.K-param.preserveDCAtom);%将数据集的1到param.K-param.preserveDCAtom数据作为字典集  
+   Dictionary(:,1:param.K-param.preserveDCAtom) = Data(:,1:param.K-param.preserveDCAtom);%将数?��????�param.K-param.preserveDCAtom?�据作为字典?? 
 
 elseif (strcmp(param.InitializationMethod,'GivenMatrix'))  
 
-   Dictionary(:,1:param.K-param.preserveDCAtom) = param.initialDictionary(:,1:param.K-param.preserveDCAtom);%将initialDictionary的1到param.K-param.preserveDCAtom列作为字典集  
+   Dictionary(:,1:param.K-param.preserveDCAtom) = param.initialDictionary(:,1:param.K-param.preserveDCAtom);%将initialDictionary???�param.K-param.preserveDCAtom?��?为�??��?  
 
 end  
 
@@ -212,7 +206,7 @@ end
 
 if (param.preserveDCAtom)  
 
-   tmpMat = FixedDictionaryElement \ Dictionary;%求minimal norm（FixedDictionaryElement×Dictionary-dictionary）  
+   tmpMat = FixedDictionaryElement \ Dictionary;%求minimal norm（FixedDictionaryElement?Dictionary-dictionary�? 
 
    Dictionary = Dictionary - FixedDictionaryElement*tmpMat;  
 
@@ -220,9 +214,9 @@ end
 
 %normalize the dictionary.  
 
-Dictionary = Dictionary*diag(1./sqrt(sum(Dictionary.*Dictionary)));%归一化  
+Dictionary = Dictionary*diag(1./sqrt(sum(Dictionary.*Dictionary)));%归�??? 
 
-Dictionary = Dictionary.*repmat(sign(Dictionary(1,:)),size(Dictionary,1),1); % multiply in the sign of the first element.%字典集中的每个元素的化为正数  
+Dictionary = Dictionary.*repmat(sign(Dictionary(1,:)),size(Dictionary,1),1); % multiply in the sign of the first element.%字典?�中?��?个�?素�??�为�?��  
 
 totalErr = zeros(1,param.numIteration);  
 
@@ -232,11 +226,11 @@ totalErr = zeros(1,param.numIteration);
 
  
 
-for iterNum = 1:param.numIteration  
+for iterNum = 1:param.numIteration 
 
    % find the coefficients  
 
-   if (param.errorFlag==0)%固定表达系数的个数  
+   if (param.errorFlag==0)%?��?表达系数?�个?? 
 
        %CoefMatrix = mexOMPIterative2(Data, [FixedDictionaryElement,Dictionary],param.L);  
 
@@ -246,7 +240,7 @@ for iterNum = 1:param.numIteration
 
        %CoefMatrix = mexOMPerrIterative(Data, [FixedDictionaryElement,Dictionary],param.errorGoal);  
 
-       CoefMatrix = OMPerr([FixedDictionaryElement,Dictionary],Data, param.errorGoal);%设定允许的误差  
+       CoefMatrix = OMPerr([FixedDictionaryElement,Dictionary],Data, param.errorGoal);%设�??�许?�误�? 
 
        param.L = 1;  
 
@@ -256,17 +250,17 @@ for iterNum = 1:param.numIteration
 
    replacedVectorCounter = 0;  
 
-   rPerm = randperm(size(Dictionary,2));%生成一个1到size(Dictionary,2)的随机的向量  
+   rPerm = randperm(size(Dictionary,2));%?��?�?��1?�size(Dictionary,2)?��??��??��?  
 
    for j = rPerm  
 
-       [betterDictionaryElement,CoefMatrix,addedNewVector] = I_findBetterDictionaryElement(Data,...  
-
+       [betterDictionaryElement,CoefMatrix,addedNewVector] = I_findBetterDictionaryElement(Data, ...  
+...
            [FixedDictionaryElement,Dictionary],j+size(FixedDictionaryElement,2),...  
-
+...
            CoefMatrix ,param.L);  
 
-       Dictionary(:,j) = betterDictionaryElement;%更新字典集  
+       Dictionary(:,j) = betterDictionaryElement;%?�新字典?? 
 
        if (param.preserveDCAtom)  
 
@@ -274,7 +268,7 @@ for iterNum = 1:param.numIteration
 
            Dictionary(:,j) = betterDictionaryElement - FixedDictionaryElement*tmpCoef;  
 
-           Dictionary(:,j) = Dictionary(:,j)./sqrt(Dictionary(:,j)'*Dictionary(:,j));%归一化  
+           Dictionary(:,j) = Dictionary(:,j)./sqrt(Dictionary(:,j)'*Dictionary(:,j));%归�??? 
 
        end  
 
@@ -326,7 +320,7 @@ end
 
  
 
-output.CoefMatrix = CoefMatrix;  
+output.CoefMatrix = CoefMatrix;
 
 Dictionary = [FixedDictionaryElement,Dictionary];  
 
@@ -338,7 +332,7 @@ Dictionary = [FixedDictionaryElement,Dictionary];
 
  
 
-function [betterDictionaryElement,CoefMatrix,NewVectorAdded] = I_findBetterDictionaryElement(Data,Dictionary,j,CoefMatrix,numCoefUsed)%CoefMatrix为字典最终的系数  
+function [betterDictionaryElement,CoefMatrix,NewVectorAdded] = I_findBetterDictionaryElement(Data,Dictionary,j,CoefMatrix,numCoefUsed)%CoefMatrix为�??��?终�?系数  
 
 if (length(who('numCoefUsed'))==0)  
 
@@ -346,23 +340,23 @@ if (length(who('numCoefUsed'))==0)
 
 end  
 
-relevantDataIndices = find(CoefMatrix(j,:)); % 非零元在第j行的系数矩阵中的位置the data indices that uses the j'th dictionary element.  
+relevantDataIndices = find(CoefMatrix(j,:)); % ?�零?�在第j行�?系数?�阵中�?位置the data indices that uses the j'th dictionary element.  
 
-if (length(relevantDataIndices)<1) %(length(relevantDataIndices)==0)如果系数矩阵的第j列全为零  
+if (length(relevantDataIndices)<1) %(length(relevantDataIndices)==0)如�?系数?�阵?�第j?�全为零  
 
-   ErrorMat = Data-Dictionary*CoefMatrix;%在已有的字典集下和系数下对data项的估计误差  
+   ErrorMat = Data-Dictionary*CoefMatrix;%?�已?��?字典?��??�系?��?对data项�?估计误差  
 
-   ErrorNormVec = sum(ErrorMat.^2);%对误 差每项平方  
+   ErrorNormVec = sum(ErrorMat.^2);%对误 差�?项平?? 
 
-   [d,i] = max(ErrorNormVec);%d为所有列中最大项，i为其第几列  
+   [d,i] = max(ErrorNormVec);%d为�??��?中�?大项，i为其第�??? 
 
-   betterDictionaryElement = Data(:,i);%ErrorMat(:,i); %数据项的i列赋给betterDictionaryElement  
+   betterDictionaryElement = Data(:,i);%ErrorMat(:,i); %?�据项�?i?��?给betterDictionaryElement  
 
-   betterDictionaryElement = betterDictionaryElement./sqrt(betterDictionaryElement'*betterDictionaryElement);%归一化betterDictionaryElement  
+   betterDictionaryElement = betterDictionaryElement./sqrt(betterDictionaryElement'*betterDictionaryElement);%归�??�betterDictionaryElement  
 
-   betterDictionaryElement = betterDictionaryElement.*sign(betterDictionaryElement(1));%将betterDictionaryElement中负的元素化为正的  
+   betterDictionaryElement = betterDictionaryElement.*sign(betterDictionaryElement(1));%将betterDictionaryElement中�??��?素�?为正?? 
 
-   CoefMatrix(j,:) = 0;%将系数矩阵的第j行赋值为0  
+   CoefMatrix(j,:) = 0;%将系?�矩?��?第j行�??�为0  
 
    NewVectorAdded = 1;  
 
@@ -374,11 +368,11 @@ end
 
 NewVectorAdded = 0;  
 
-tmpCoefMatrix = CoefMatrix(:,relevantDataIndices); %将系数矩阵的第j行的非零项所在的列赋给tmpCoefMatrix  
+tmpCoefMatrix = CoefMatrix(:,relevantDataIndices); %将系?�矩?��?第j行�??�零项�??��??��?给tmpCoefMatrix  
 
-tmpCoefMatrix(j,:) = 0;% the coeffitients of the element we now improve are not relevant.将tmpCoefMatrix第j行赋0  
+tmpCoefMatrix(j,:) = 0;% the coeffitients of the element we now improve are not relevant.将tmpCoefMatrix第j行�?0  
 
-errors =(Data(:,relevantDataIndices) - Dictionary*tmpCoefMatrix); %在除去字典中第j个的元素后数据集与预测数据之间的误差% vector of errors that we want to minimize with the new element  
+errors =(Data(:,relevantDataIndices) - Dictionary*tmpCoefMatrix); %?�除?��??�中第j个�??��??�数?��?与�?测数?��??��?误差% vector of errors that we want to minimize with the new element  
 
 % % the better dictionary element and the values of beta are found using svd.  
 
@@ -388,9 +382,9 @@ errors =(Data(:,relevantDataIndices) - Dictionary*tmpCoefMatrix); %在除去字�
 
 % % is done using the largest singular value.  
 
-[betterDictionaryElement,singularValue,betaVector] = svds(errors,1);%betterDictionaryElement为右特征向量 singularValue为最大特征值 betaVector左特征向量  
+[betterDictionaryElement,singularValue,betaVector] = svds(errors,1);%betterDictionaryElement为右?��??��? singularValue为�?大特征�? betaVector左特征�??? 
 
-CoefMatrix(j,relevantDataIndices) = singularValue*betaVector';% *signOfFirstElem 系数矩阵的第j行的非零元的位置换为singularValue*betaVector的值  
+CoefMatrix(j,relevantDataIndices) = singularValue*betaVector';% *signOfFirstElem 系数?�阵?�第j行�??�零?��?位置?�为singularValue*betaVector?��?  
 
  
 
