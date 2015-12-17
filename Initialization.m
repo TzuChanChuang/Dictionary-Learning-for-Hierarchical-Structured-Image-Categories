@@ -54,7 +54,8 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%
 for h = 1:2
 	fprintf(['initializing shared dict, h = ' num2str(h) '\n']);
-	[sdClass, sd, sdl, hd, hdl, td, tdl] = Ini_ShareD(Dict_ini(:,:,h), DLabel_ini(:,:,h), opts.nClass(h));		
+    nClass = opts.nClass(h);
+	[sdClass, sd, sdl, hd, hdl, td, tdl] = Ini_ShareD(Dict_ini(:,:,h), Dlabel_ini(:,:,h), nClass);		
 	SharedD_nClass(h) = sdClass;		%sdClass(h) are all the same
 	SharedDict_ini(:,:,h) = sd;
 	SharedDlabel_oriDic_ini(:,:,h) = sdl;
