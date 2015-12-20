@@ -71,15 +71,23 @@ end
 for h= 1:2
 	fprintf(['Initalize coefficients, h = ' num2str(h) '\n']);
 	coef_cvx = [];
-	%HeadCoef_cvx = [];
-	%SharedCoef_cvx = [];
+	coefLabel_cvx = [];
+	HeadCoef_cvx = [];
+	HeadCoefLabel_cvx = [];
+	SharedCoef_cvx = [];
+	SharedCoefLabel_cvx = [];
 	for ci = 1:opts.nClass(h)
 		fprintf(['Initalize coefficients, class:' num2str(ci) '\n']);
 		X  =    TrainDat(:,TrainLabel(:,:,h)==ci,h);
+        %size(X)
 		D  =    TotalDict_ini(:,TotalDictLabel_ini(:,:,h) ==ci,h);
+        %size(D)
 		A  =    zeros(size(D,2),size(X,2));
+        %size(A)
 		m  =	size(A,1);
 		n  =	size(A,2);
+        p  =    size(D,2);
+        
 		for j=1:n;
 			cvx_begin quiet
 				variable a(p);
@@ -87,18 +95,21 @@ for h= 1:2
 			cvx_end
 			A(:,j) = a;
 		end
-		coef_cvx = [coef_cvx A];
+		coef_cvx = [coef_cvx ; A];
+		coefLabel_cvx = [coefLabel_cvx; repmat(ci,[m 1])];
+		SharedCoef_cvx = [SharedCoef_cvx ; A(1:SharedD_nClass(h), :)];
+		SharedCoefLabel_cvx = [SharedCoefLabel_cvx; repmat(ci,[SharedD_nClass(h) 1])];
+		HeadCoef_cvx = [HeadCoef_cvx ; A(SharedD_nClass(h)+1:m, :)];
+		HeadCoefLabel_cvx = [HeadCoefLabel_cvx; repmat(ci,[m-SharedD_nClass(h) 1])];
 	end
-	SharedCoef_cvx = coef_cvx(1:SharedD_nClass(h), :);
-	HeadCoef_cvx = coef_cvx(SharedD_nClass(h)+1:m, :);
 
 	coef(:,:,h) = coef_cvx;
+	coefLabel(:,:,h) = coefLabel_cvx;
 	HeadCoef(:,:,h) = HeadCoef_cvx;
+	HeadCoefLabel(:,:,h) = HeadCoefLabel_cvx;
 	SharedCoef(:,:,h) = SharedCoef_cvx;
+	SharedCoefLabel(:,:,h) = SharedCoefLabel_cvx;
 end
-%A = coef, coef_Label = TrainLaebel
-%Ai^ = HeadCoef
-%Ai0 = SharedCoef
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Main loop 
