@@ -1,4 +1,4 @@
-function [SharedD_nClass, SharedDict_ini, SharedDlabel_oriDic_ini, HeadDict_ini, HeadDictLabel_ini, TotalDict_ini, TotalDictLabel_ini] = Ini_ShareD(Dict_ini, Dlabel_ini, nClass)
+function [SharedD_nClass, SharedDict_ini, SharedDlabel_oriDic_ini, new_HeadDict, new_HeadDict_label, TotalDict_ini, TotalDictLabel_ini] = Ini_ShareD(Dict_ini, Dlabel_ini, nClass)
 
 %----------------------------------------------------------------------
 %
@@ -98,12 +98,22 @@ function [SharedD_nClass, SharedDict_ini, SharedDlabel_oriDic_ini, HeadDict_ini,
         end
 	end
 
+	%%randomly pick 900 features over each HeadDict_ini(to make number of features in every class the same)
+	new_HeadDict = [];
+	new_HeadDict_label= [];
+	for i = 1:nClass
+		temp_HeadDict = HeadDict_ini(:,HeadDictLabel_ini==nClass);
+		temp_HeadDict = temp_HeadDict(:,1:900);
+		new_HeadDict = [new_HeadDict temp_HeadDict];
+		new_HeadDict_label = [new_HeadDict_label repmat(nClass, [1 900])];
+	end
+
 
 	%Total Dict Di
 	TotalDict_ini = [];
 	TotalDictLabel_ini = [];
 	for i = 1:nClass
-		temp_totaldict = [SharedDict_ini HeadDict_ini(:, HeadDictLabel_ini==i)];
+		temp_totaldict = [SharedDict_ini new_HeadDict(:, new_HeadDict_label==i)];
 		TotalDict_ini = [TotalDict_ini temp_totaldict];
 		TotalDictLabel_ini = [TotalDictLabel_ini repmat(i, [1 size(temp_totaldict, 2)])];
 	end
