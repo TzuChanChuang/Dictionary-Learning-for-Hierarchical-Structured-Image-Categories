@@ -102,10 +102,10 @@ function [SharedD_nClass, SharedDict_ini, SharedDlabel_oriDic_ini, new_HeadDict,
 	new_HeadDict = [];
 	new_HeadDict_label= [];
 	for i = 1:nClass
-		temp_HeadDict = HeadDict_ini(:,HeadDictLabel_ini==nClass);
-		temp_HeadDict = temp_HeadDict(:,1:900);
+		temp_HeadDict = HeadDict_ini(:,HeadDictLabel_ini==i);
+		temp_HeadDict = temp_HeadDict(:,1:900);					%pick the former 900
 		new_HeadDict = [new_HeadDict temp_HeadDict];
-		new_HeadDict_label = [new_HeadDict_label repmat(nClass, [1 900])];
+		new_HeadDict_label = [new_HeadDict_label repmat(i, [1 900])];
 	end
 
 
