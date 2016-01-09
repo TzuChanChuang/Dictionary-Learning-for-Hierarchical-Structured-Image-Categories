@@ -29,7 +29,8 @@ function [gap] = Class_Energy(Xi,D,A0,MUA0,HA,Ai,Aa,drls,trls,index,lambda1,eta2
 gap3  =   0;
 gap4  =   0;
 GAP1  =   norm((Xi-D(:, drls==index)*Ai),'fro')^2;      % only for one class, no effect
-GAP2  =   lambda1*sum(abs(Ai(:)));%
+GAP2  =   lambda1*sum(abs(Ai(:)));
+gap6  = 0;
     
 Aa(:,trls==index)  =  Ai;
 tem_Aa             =  Aa;
@@ -37,7 +38,7 @@ mean_Aa            =  mean(tem_Aa,2);
 tem_A0             =  A0;                   %% shared coef
 mean_A0            =  mean(tem_A0,2);
 tem_HA			   =  HA;					%% head coef 
-mean_HA			   =  mean(tem_HA,2)      	
+mean_HA			   =  mean(tem_HA,2);      	
     
 for i_c = 1:classn
 	t_HA_ic   = tem_HA(:,trls==i_c);
@@ -54,7 +55,7 @@ end
 n_c  =  size(Ai,2);
 n_c0 =  size(A0,2);
 gap3 = norm(Ai-repmat(mean(Ai,2),[1 n_c]),'fro')^2;		%Sw
-gap5 = norm(A0-repmat(mean(A0,2),[1 n_c]),'fro')^2;		%Sw'
+gap5 = norm(A0-repmat(mean(A0,2),[1 n_c0]),'fro')^2;		%Sw'
 
 GAP3 = eta2*gap3-eta3*gap4; %eta*(Sw-Sb)
 GAP4 = eta_2*gap5-eta_2*gap6; %eta*(Sw'-Sb')

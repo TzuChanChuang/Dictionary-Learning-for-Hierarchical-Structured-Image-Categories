@@ -98,7 +98,7 @@ for h= 1:2
 		coef_cvx = [coef_cvx A];
 	end-	
 	SharedCoef_cvx = coef_cvx(1:SharedD_nClass(h), :);
- -	HeadCoef_cvx = coef_cvx(SharedD_nClass(h)+1:m, :);
+ 	HeadCoef_cvx = coef_cvx(SharedD_nClass(h)+1:m, :);
 
 	coef(:,:,h) = coef_cvx;
 	HeadCoef(:,:,h) = HeadCoef_cvx;
@@ -213,7 +213,7 @@ while DL_nit<=opts.nIter
 
 	DL_nit = DL_nit+1;
 end
-Drls = Dlabel_ini;
+Drls = DictLabel;
 
 figure;
 subplot(1,2,1); plot(GAP_coding(1),'-*'); hold on; plot(GAP_coding(2),'-o'); hold off; title('GAP_coding');

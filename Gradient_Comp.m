@@ -1,4 +1,4 @@
-function grad = Gradient_Comp(Xi,Xa,X0,X0_up,X0_up_label,classn,index,index_h,eta2,eta3,eta_2...
+function grad = Gradient_Comp(Xi,Xa,X0,X0_up,X0_up_label,classn,index,index_h,eta2,eta3,eta_2,...
     trls,drls,newpar,BAI,CJ,BAI_up,CJ_up)
 % ========================================================================
 % IPM's Gradient computation of FDDL, Version 1.0
@@ -30,15 +30,15 @@ n_d             =      newpar.n_d;                % the sample number of i-th tr
 n               =      newpar.n;
 B_line_i        =      newpar.B_line_i;
 C_j             =      newpar.C_j;
-C_j_up          =      newpar.C_j_up
+C_j_up          =      newpar.C_j_up;
 C_line          =      newpar.C_line;
-C_line_up       =      newpar.C_line_up
+C_line_up       =      newpar.C_line_up;
 DD              =      newpar.DD;
 DAi             =      newpar.DAi; 
 Di0Di0          =      newpar.Di0Di0;
 Di0Ai           =      newpar.Di0Ai;
 BiBi            =      newpar.BiBi;
-BiBi_up   		= 	   newpar.BiBi_up;
+BiBi_up         =      newpar.BiBi_up;
 BaiBai          =      newpar.BaiBai;
 BaiBai_up       =      newpar.BaiBai_up;
 BaiGxi          =      newpar.BaiGxi;

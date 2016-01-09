@@ -118,10 +118,10 @@ Xh                 =          HA;
 Xi                 =          A(:,trls==index);
 Xt_now             =          A(:,trls==index);
 
-newpar.n_d          =   size(Ai,2);             % the sample number of i-th training data
+newpar.n_d          =   size(Ai,2);             % the sample number of i-th(this) training data
 newpar.n            =   size(Xa,2);             % the total sample number of training data
 n                   =   newpar.n;
-newpar.n_up         =   size(A_up) * 2;         % the total sample number of upper classes' training data(2= number of upper classes)
+newpar.n_up         =   size(A_up,2) * size(A_up,3);             % the total sample number of upper classes' training data
 n_up                =   newpar.n_up;
 
 
