@@ -8,7 +8,7 @@ load(['catndog.mat']);
 %parameter
 %%%%%%%%%%%%%%%%%%%%%%%%
 opts.nClass(1)    	=   10;
-opts.nClass(2)   	=   12;
+opts.nClass(2)   	=   10;
 opts.lambda       	=   0.15;
 opts.eta       		=   0.1;
 opts.eta_2          =   0.1;

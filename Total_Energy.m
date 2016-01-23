@@ -13,7 +13,7 @@ function [gap] = Total_Energy(X,A,A0,HA,classn,DL_par,DL_ipts)
 %           (5) classn:     the number of class
 %           (6) DL_par
 %                      .dls     labels of dictionary's column
-%                      .lambda  parameter of l1-norm energy of coefficient
+%                      .tau     parameter of l1-norm energy of coefficient
 %                      .eta     parameter of within-class scatter
 %                      .eta_2   parameter of upper within-class scatter
 %           (7) DL_ipts
@@ -28,7 +28,7 @@ function [gap] = Total_Energy(X,A,A0,HA,classn,DL_par,DL_ipts)
  MUSA = DL_ipts.MUSA;
  drls    = DL_par.dls;
  trls    = DL_ipts.trls;
- lambda1 = DL_par.lambda;
+ lambda1 = DL_par.tau;
  eta2 = DL_par.eta;
  eta3 = eta2;
  eta4 = eta2;
@@ -36,22 +36,24 @@ function [gap] = Total_Energy(X,A,A0,HA,classn,DL_par,DL_ipts)
  
 gap3  =   0;
 gap4  =   0;
+gap5  =   0;
+gap6  =   0;
 GAP2  =   lambda1*sum(abs(A(:)));%
 tem_A = A;
 tem_A0 = A0;
 tem_HA = HA;
 for i_c = 1:classn
-    t_A_ic  = tem_A(:,trls==i_c);		%Ai of i_cth class
-    t_A0_ic = tem_A0(:,trls==i_c);		%A0 of i_cth class
-    t_HA_ic = tem_HA(:,trls==i_c);		%Ai^ of i_cth class
-    gap3 = gap3+norm(t_A_ic-repmat(mean(t_A_ic,2),[1 size(t_A_ic,2)]),'fro')^2;							%Sw
-    gap4 = gap4+size(t_HA_ic,2)*(mean(t_HA_ic,2)-mean(tem_HA,2))'*(mean(t_HA_ic,2)-mean(tem_HA,2));		%Sb
+    t_A_ic  = tem_A(:,trls==i_c);       %Ai of i_cth class
+    t_A0_ic = tem_A0(:,trls==i_c);      %A0 of i_cth class
+    t_HA_ic = tem_HA(:,trls==i_c);      %Ai^ of i_cth class
+    gap3 = gap3+norm(t_A_ic-repmat(mean(t_A_ic,2),[1 size(t_A_ic,2)]),'fro')^2;                         %Sw
+    gap4 = gap4+size(t_HA_ic,2)*(mean(t_HA_ic,2)-mean(tem_HA,2))'*(mean(t_HA_ic,2)-mean(tem_HA,2));     %Sb
     gap5 = gap5+norm(t_A0_ic-repmat(mean(t_A0_ic,2),[1 size(t_A0_ic,2)]),'fro')^2;
     gap6 = gap6+size(t_A0_ic,2)*(mean(t_A0_ic,2)-MUSA)'*(mean(t_A0_ic,2)-MUSA);;
 end
       
-GAP3 = eta2*gap3-eta3*gap4;			%eta*(Sw-Sb)
-GAP4 = eta_2*gap5-eta_2*gap6;		%eta_28(Sw'-Sb')
+GAP3 = eta2*gap3-eta3*gap4;         %eta*(Sw-Sb)
+GAP4 = eta_2*gap5-eta_2*gap6;       %eta_28(Sw'-Sb')
 
 
 GAP1  =   0;

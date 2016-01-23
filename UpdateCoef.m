@@ -33,9 +33,9 @@ function [opts] = UpdateCoef(ipts,par)
 %----------------------------------------------------------------------
 %
 %  Inputs :   (1) ipts :    the structre of input data
-%                    .D     the total dictionary                                                      
+%                    .D     the total dictionary  (this upper class)                                                    
 %                    .X     the ith training data
-%                    .A     the coefficient matrix in the last iteration
+%                    .A     the coefficient matrix in the last iteration(this upper class)
 %                    .SA    the shared coefficient matrix                                       
 %                    .MUSA  the mean of all the shared coefficient matrix
 %                    .HA    the head coefficient matrix in the last iteration                                      
@@ -50,7 +50,7 @@ function [opts] = UpdateCoef(ipts,par)
 %                    .dls     the labels of dictionary's columns
 %                    .index   the label of the class being processed
 %                    .index_h     the label of the upper class being processed
-%                    .m_up    the number of upper classes' dictionary column atoms
+%                    .SharedD_nClass    number of column of shared dict
 % Outputs:    (1) opts :    the structure of output data
 %                    .A     the coefficient matrix
 %                    .ert   the total energy sequence
@@ -62,31 +62,35 @@ par.isshow   =     false;
 par.citeT    =     1e-6;  % stop criterion
 par.cT       =     1e+10; % stop criterion
 
-m            =    size(ipts.D,2);
-m_up         =    par.m_up;
-drls         =    par.dls;  
-D            =    ipts.D;       %the whole dictionary
-X            =    ipts.X;       %the training data of the class
-X_up         =    ipts.totalX;
-A            =    ipts.A;       %the whole coef
-SA           =    ipts.SA;      %the whole shared coef
-SA_up        =    ipts.SA_up;
-SA_up_l      =    ipts.SA_up_l;
-MUSA         =    ipts.MUSA;    %the mean of upper classes' coef
-HA           =    ipts.HA;
-tau          =    par.tau;
-lambda1      =    par.tau;
-eta2         =    par.eta;
-eta3         =    par.eta;
-eta_2        =    par.eta_2;
-trls         =    ipts.trls;
-classn       =    length(unique(trls));
-nIter        =    par.nIter;
-c            =    par.c;
-sigma        =    c;
-tau1         =    tau/2;
-index        =    par.index;
-index_h      =    par.index_h;
+
+
+drls            =    par.dls;  
+D               =    ipts.D;       %the whole dictionary
+X               =    ipts.X;       %the training data of the class
+X_up            =    ipts.totalX;
+A               =    ipts.A;       %the whole coef(this upper class)
+SA              =    ipts.SA;      %the whole shared coef(this upper class)
+SA_up           =    ipts.SA_up;
+SA_up_l         =    ipts.SA_up_l;
+MUSA            =    ipts.MUSA;    %the mean of upper classes' coef
+HA              =    ipts.HA;
+tau             =    par.tau;
+lambda1         =    par.tau;
+eta2            =    par.eta;
+eta3            =    par.eta;
+eta_2           =    par.eta_2;
+trls            =    ipts.trls;
+classn          =    length(unique(trls));
+nIter           =    par.nIter;
+c               =    par.c;
+sigma           =    c;
+tau1            =    tau/2;
+index           =    par.index;
+index_h         =    par.index_h;
+Di              =    D(:, drls==index);
+m               =    size(Di,2);
+m_up            =    size(Di,1);
+SharedD_nClass  =    par.SharedD_nClass;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %TWIST parameter
@@ -121,8 +125,8 @@ Xt_now             =          A(:,trls==index);
 newpar.n_d          =   size(Ai,2);             % the sample number of i-th(this) training data
 newpar.n            =   size(Xa,2);             % the total sample number of training data
 n                   =   newpar.n;
-newpar.n_up         =   size(A_up,2) * size(A_up,3);             % the total sample number of upper classes' training data
-n_up                =   newpar.n_up;
+%newpar.n_up         =   size(A_up,2) * size(A_up,3);             % the total sample number of upper classes' training data
+%n_up                =   newpar.n_up;
 
 
 for ci = 1:classn
@@ -133,7 +137,7 @@ for ci = 1:classn
     CJ(ci).M  = t_c_j;
     BAI(ci).M = t_b_angle_i;   
 end
-
+%{
 for ci = 1:2
     t_n_d = sum(SA_up_l==ci);
     t_b_line_i     =   ones(t_n_d,newpar.n)./t_n_d;
@@ -142,51 +146,40 @@ for ci = 1:2
     CJ_up(ci).M  = t_c_j;
     BAI_up(ci).M = t_b_angle_i;   
 end
-
+%}
 newpar.B_line_i     =   ones(newpar.n_d,newpar.n_d)./newpar.n_d;
-newpar.B_line_i_up  =   ones(newpar.n,newpar.n)./newpar.n;
+%newpar.B_line_i_up  =   ones(newpar.n,newpar.n)./newpar.n;
 newpar.C_j          =   ones(newpar.n_d,newpar.n_d)./newpar.n;
-newpar.C_j_up       =   ones(newpar.n,newpar.n)./newpar.n_up;
+%newpar.C_j_up       =   ones(newpar.n,newpar.n)./newpar.n_up;
 newpar.CjCj         =   (newpar.C_j)*(newpar.C_j)';
-newpar.CjCj_up      =   (newpar.C_j_up)*(newpar.C_j_up)';
+%newpar.CjCj_up      =   (newpar.C_j_up)*(newpar.C_j_up)';
 newpar.C_line       =   ones(newpar.n,newpar.n_d)./newpar.n;
-newpar.C_line_up    =   ones(newpar.n_up,newpar.n)./newpar.n_up;
+%newpar.C_line_up    =   ones(newpar.n_up,newpar.n)./newpar.n_up;
 B_i                 =   eye(newpar.n_d,newpar.n_d)-newpar.B_line_i;
-B_i_up              =   eye(newpar.n,newpar.n)-newpar.B_line_i_up;
+%B_i_up              =   eye(newpar.n,newpar.n)-newpar.B_line_i_up;
 newpar.BiBi         =   B_i*(B_i)';
-newpar.BiBi_up      =   B_i_up*(B_i_up)';
+%newpar.BiBi_up      =   B_i_up*(B_i_up)';
 B_angle_i           =   newpar.B_line_i-newpar.C_j;
-B_angle_i_up        =   newpar.B_line_i_up-newpar.C_j_up;
+%B_angle_i_up        =   newpar.B_line_i_up-newpar.C_j_up;
 newpar.Bai          =   B_angle_i;
-newpar.Bai_up       =   B_angle_i_up;
+%newpar.Bai_up       =   B_angle_i_up;
 newpar.BaiBai       =   B_angle_i*(B_angle_i)';
-newpar.BaiBai_up    =   B_angle_i_up*(B_angle_i_up)';
+%newpar.BaiBai_up    =   B_angle_i_up*(B_angle_i_up)';
 Xo                  =   Xa;
 Xo(:,trls==index)   =   0;
-Xo_up               =   X0_up;
-Xo_up(:,X0_up_label==index_h) =   0;
+%Xo_up               =   X0_up;
+%Xo_up(:,X0_up_label==index_h) =   0;
 G_X_i               =   Xo*newpar.C_line;
-G_X_i_up            =   Xo_up*newpar.C_line_up;
+%G_X_i_up            =   Xo_up*newpar.C_line_up;
 newpar.BaiGxi       =   B_angle_i*(G_X_i)';
-newpar.BaiGxi_up    =   B_angle_i_up*(G_X_i_up)';
-newpar.DD           =   D'*D;
-newpar.DAi          =   D'*Ai;
-Di0                 =   D;
-Di0(:,drls~=index)  =   0;
-newpar.Di0Di0       =   (Di0)'*Di0;
-newpar.Di0Ai        =   (Di0)'*Ai;
-newpar.DoiDoi       =   zeros(size(D,2));
-for t_i  =  1:classn
-    if t_i ~= index
-    Doi                 =   D;
-    Doi(:,drls~=t_i)      =   0;
-    newpar.DoiDoi       =   newpar.DoiDoi+(Doi)'*Doi;
-    end 
-end
+%newpar.BaiGxi_up    =   B_angle_i_up*(G_X_i_up)';
+
+newpar.DD           =   Di'*Di;
+newpar.DAi          =   Di'*Ai;
 
 newpar.m            =   m;                 % the number of dictionary column atoms
-newpar.m_up         =   m_up;              % the number of upper classes' dictionary column atoms
-
+%newpar.m_up         =   m_up;              
+%fprintf(['newpar.m_up:' num2str(newpar.m_up) '\n']);      
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %main loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -196,24 +189,25 @@ xm2       =      Xi;%A(:,trls==index);
 xm1       =      Xi;%A(:,trls==index); % now
 
 
+
 [gap] = Class_Energy(Ai,D,X0,X0_MU,Xh,xm1,Xa,drls,trls,index,...                           
         lambda1,eta2,eta3,eta_2,classn);
 prev_f   =   gap;
 ert(1) = gap;
 for n_it = 2 : nIter;
-         
+   fprintf(['UpdateCoef.m, n_it:' num2str(n_it) '\n']);      
    Xa(:,trls==index)  =  Xi;
       
    while for_ever
         % IPM estimate
          
-        grad = Gradient_Comp(xm1,Xa,X0,X0_up,X0_up_label,classn,index,index_h,...
+        [grad] = Gradient_Comp(xm1,Xa,classn,index,...
         eta2,eta3,eta_2,trls,drls,newpar,...
-        BAI,CJ,BAI_up,CJ_up);
-    
+        BAI,CJ,SharedD_nClass);
+        fprintf(['finished Gradient_Comp']);  
         v        =   xm1(:)-grad./(2*sigma);
         tem      =   soft(v,tau1/sigma);
-        x_temp   =   reshape(tem,[size(D,2),size(xm1,2)]);
+        x_temp   =   reshape(tem,[size(D(:,drls==index),2),size(xm1,2)]);
         
         if (IST_iters >= 2) | ( TwIST_iters ~= 0)
             % set to zero the past when the present is zero
@@ -226,11 +220,10 @@ for n_it = 2 : nIter;
             % two-step iteration
             xm2    =   (alpha-beta)*xm1 + (1-alpha)*xm2 + beta*x_temp;
             % compute residual
-           
-            [gap] = Class_Energy(Ai,D,X0,X0_MU,Xh,xm1,Xa,drls,trls,index,...                           
-            lambda1,eta2,eta3,eta_2,classn);
+           [gap] = FDDL_Class_Energy(Ai,D,xm2,Xa,drls,trls,index,...
+                lambda1,lambda2,lambda3,lambda4,classn,fish_tau2,fish_tau3);
 
-            f   =   gap;
+           f   =   gap;
           
             if (f > prev_f) & (enforceMonotone)
                 TwIST_iters   =  0;  % do a IST iteration if monotonocity fails

@@ -3,8 +3,8 @@ function B = learn_basis_dual(X, S, c, Binit)
 %
 % This code solves the following problem:
 % 
-%    minimize_B   0.5*||X - B*S||^2											% X= training data, B= dict, S= coef
-%    subject to   ||B(:,j)||_2 <= c, forall j=1...size(S,1)			%number of items in B
+%    minimize_B   0.5*||X - B*S||^2                                         % X= training data, B= dict, S= coef
+%    subject to   ||B(:,j)||_2 <= c, forall j=1...size(S,1)         %number of items in B
 
 %%% number of items in X = L * N
 L = size(X,1);
@@ -25,7 +25,7 @@ end
 trXXt = sum(sum(X.^2));
 
 lb=zeros(size(dual_lambda));
-options = optimset('GradObj','on', 'Hessian','on');
+options = optimset('Algorithm','trust-region-reflective' ,'GradObj','on', 'Hessian','on');
 %  options = optimset('GradObj','on', 'Hessian','on', 'TolFun', 1e-7);
 
 [x, fval, exitflag, output] = fmincon(@(x) fobj_basis_dual(x, SSt, XSt, X, c, trXXt), dual_lambda, [], [], [], [], lb, [], [], options);
@@ -47,7 +47,7 @@ return;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [f,g,H] = fobj_basis_dual(dual_lambda, SSt, XSt, X, c, trXXt)			%函數值、gradient、hessian matrix
+function [f,g,H] = fobj_basis_dual(dual_lambda, SSt, XSt, X, c, trXXt)          %函數值、gradient、hessian matrix
 % Compute the objective function value at x
 L= size(XSt,1);
 M= length(dual_lambda);
